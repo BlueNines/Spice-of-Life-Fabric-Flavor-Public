@@ -31,6 +31,12 @@ public class ModConfig {
 				String json = new String(Files.readAllBytes(CONFIG_PATH), StandardCharsets.UTF_8);
 				INSTANCE = gson.fromJson(json, ModConfig.class);
 				if (INSTANCE == null) INSTANCE = new ModConfig();
+				// Ensure any newly added fields are written back to disk so run/config is up-to-date
+				try {
+					save();
+				} catch (Exception ignore) {
+					// best-effort only
+				}
 			} else {
 				// write default
 				INSTANCE = new ModConfig();
@@ -38,6 +44,11 @@ public class ModConfig {
 			}
 		} catch (IOException e) {
 			INSTANCE = new ModConfig();
+			// try to persist defaults if read fails
+			try {
+				save();
+			} catch (Exception ignore) {
+			}
 		}
 	}
 
