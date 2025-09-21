@@ -1,0 +1,7 @@
+{
+  "sol2f.tooltip.unconsumed": "玄物藏真，形貌难测",
+  "commands.sol2f.clearhealthy.success": "［食進］盡復本源（操作成功，已重置）",
+  "commands.generic.permission": "爾無權行此令（无命令权限）",
+  "commands.sol2f.clearhealthy.failed": "［食進］天不予應（操作失败）",
+  "sol2f.msg.first_eaten": "汝獲見：%s"
+}

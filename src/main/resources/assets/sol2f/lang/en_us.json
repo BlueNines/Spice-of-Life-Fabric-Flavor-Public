@@ -1,0 +1,7 @@
+{
+  "sol2f.tooltip.unconsumed": "Not yet eaten",
+  "commands.sol2f.clearhealthy.success": "[sol2f] Progress reset",
+  "commands.generic.permission": "You don't have permission to run this command",
+  "commands.sol2f.clearhealthy.failed": "[sol2f] Operation failed",
+  "sol2f.msg.first_eaten": "You have discovered: %s"
+}

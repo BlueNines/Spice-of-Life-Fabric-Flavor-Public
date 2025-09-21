@@ -1,0 +1,7 @@
+{
+  "sol2f.tooltip.unconsumed": "尚未食用",
+  "commands.sol2f.clearhealthy.success": "[sol2f] 已重置",
+  "commands.generic.permission": "你没有权限运行此命令",
+  "commands.sol2f.clearhealthy.failed": "[sol2f] 操作失败",
+  "sol2f.msg.first_eaten": "你发现了：%s"
+}
