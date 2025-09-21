@@ -1,17 +1,17 @@
 {
 	"schemaVersion": 1,
 	"id": "sol2f",
-	"version": "${version}",
+	"version": "2.0",
 	"name": "Spice of Life:Fabric Flavor",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "A Fabric port of Spice of Life that rewards dietary variety: eating new foods increases your max health. This build is maintained by xianfish.",
 	"authors": [
-		"Me!"
+		"xianfish"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
 		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
-	"license": "CC0-1.0",
+	"license": "ARR",
 	"icon": "assets/sol2f/icon.png",
 	"environment": "*",
 	"entrypoints": {
