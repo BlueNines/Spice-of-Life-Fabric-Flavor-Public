@@ -1,7 +1,6 @@
 package com.sol2f.command;
 
-import com.sol2f.network.S2CFoodListSync;
-import com.sol2f.config.ModConfig;
+// ...existing code...
 import com.sol2f.SpiceOfLifeFabricFlavor;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.server.command.ServerCommandSource;
@@ -26,19 +25,9 @@ public class FoodCommands {
                     return 0;
                 }
 
-                // clear NBT list
+                // Use central clear logic to ensure the same behavior as respawn reset
                 try {
-                    net.minecraft.nbt.NbtCompound nbt = new net.minecraft.nbt.NbtCompound();
-                    player.writeNbt(nbt);
-                    nbt.put("sol2f:consumed_foods", new net.minecraft.nbt.NbtList());
-                    player.readNbt(nbt);
-
-                    // reset max health
-                    player.getAttributeInstance(net.minecraft.entity.attribute.EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(ModConfig.getInstance().defaultHealthy);
-
-                    // send empty sync
-                    S2CFoodListSync.sendTo(player, java.util.Collections.emptyList());
-
+                    com.sol2f.server.FoodUseHandler.clearEatenFoods(player);
                     src.sendFeedback(() -> Text.translatable("commands.sol2f.clearhealthy.success"), false);
                 } catch (Exception e) {
                     SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: failed to clear healthy", e);

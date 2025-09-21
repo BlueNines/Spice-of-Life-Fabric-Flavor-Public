@@ -32,8 +32,19 @@ public class FoodUseHandler {
         // Use synchronized block on the player to avoid race conditions where two events
         // both read NBT before either writes it and thus both send the first-eaten message.
         synchronized (serverPlayer) {
+            // Entry log for developerMode: record attempt
+            try {
+                if (ModConfig.getInstance().developerMode) {
+                    SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: eat attempt player={} food={}", serverPlayer.getName().getString(), id);
+                }
+            } catch (Throwable t) {
+                // ignore logging failures
+            }
             // re-read authoritative NBT inside the lock
             Set<String> current = getEatenFoods(serverPlayer);
+            if (ModConfig.getInstance().developerMode) {
+                SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: before change player={} eaten={}", serverPlayer.getName().getString(), current);
+            }
             if (!current.contains(id)) {
                 // update and persist
                 current.add(id);
@@ -45,14 +56,28 @@ public class FoodUseHandler {
                     SpiceOfLifeFabricFlavor.LOGGER.warn("sol2f: after save, authoritative eaten set does not contain {} for player {}", id, serverPlayer.getName().getString());
                 } else {
                     // apply health modifier using authoritative updated set
+                    double prevMax = serverPlayer.getMaxHealth();
                     applyHealthModifier(serverPlayer, authoritative);
+                    double newMax = serverPlayer.getMaxHealth();
                     syncToClient(serverPlayer, authoritative);
 
                     // send message once based on authoritative NBT state
                     serverPlayer.sendMessage(Text.translatable("sol2f.msg.first_eaten", Text.literal(id)), false);
                     SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: Player {} first ate {}", serverPlayer.getName().getString(), id);
+
+                    // Developer log: record post-change details
+                    try {
+                        if (ModConfig.getInstance().developerMode) {
+                            SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: after eat player={} food={} prevMax={} newMax={} eaten={}", serverPlayer.getName().getString(), id, prevMax, newMax, authoritative);
+                        }
+                    } catch (Throwable t) {
+                        // ignore logging failures
+                    }
                 }
             }
+                if (ModConfig.getInstance().developerMode) {
+                    SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: eat ignored (already eaten) player={} food={} eaten={}", serverPlayer.getName().getString(), id, current);
+                }
         }
     }
 
