@@ -36,6 +36,11 @@ public class FoodUseHandler {
             try {
                 if (ModConfig.getInstance().developerMode) {
                     SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: eat attempt player={} food={}", serverPlayer.getName().getString(), id);
+                    java.util.Map<String, String> _f = new java.util.LinkedHashMap<>();
+                    _f.put("event", "eat_attempt");
+                    _f.put("player", serverPlayer.getName().getString());
+                    _f.put("food", id);
+                    SpiceOfLifeFabricFlavor.writeStructuredDevLog(_f);
                 }
             } catch (Throwable t) {
                 // ignore logging failures
@@ -44,6 +49,11 @@ public class FoodUseHandler {
             Set<String> current = getEatenFoods(serverPlayer);
             if (ModConfig.getInstance().developerMode) {
                 SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: before change player={} eaten={}", serverPlayer.getName().getString(), current);
+                java.util.Map<String, String> _b = new java.util.LinkedHashMap<>();
+                _b.put("event", "before_change");
+                _b.put("player", serverPlayer.getName().getString());
+                _b.put("eaten", current.toString());
+                SpiceOfLifeFabricFlavor.writeStructuredDevLog(_b);
             }
             if (!current.contains(id)) {
                 // update and persist
@@ -69,6 +79,18 @@ public class FoodUseHandler {
                     try {
                         if (ModConfig.getInstance().developerMode) {
                             SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: after eat player={} food={} prevMax={} newMax={} eaten={}", serverPlayer.getName().getString(), id, prevMax, newMax, authoritative);
+                            java.util.Map<String, String> fields = new java.util.LinkedHashMap<>();
+                            fields.put("event", "after_eat");
+                            fields.put("player", serverPlayer.getName().getString());
+                            fields.put("food", id);
+                            fields.put("prevMax", Double.toString(prevMax));
+                            fields.put("newMax", Double.toString(newMax));
+                            fields.put("eaten", authoritative.toString());
+                            fields.put("unique", Integer.toString(authoritative.size()));
+                            fields.put("perHp", Double.toString(ModConfig.getInstance().healthyGain));
+                            fields.put("bonus", Double.toString(Math.min(ModConfig.getInstance().defaultHealthy + authoritative.size() * ModConfig.getInstance().healthyGain, ModConfig.getInstance().maxHealthy) - ModConfig.getInstance().defaultHealthy));
+                            fields.put("modifier_uuid", HEALTH_MODIFIER_ID.toString());
+                            SpiceOfLifeFabricFlavor.writeStructuredDevLog(fields);
                         }
                     } catch (Throwable t) {
                         // ignore logging failures
@@ -77,6 +99,12 @@ public class FoodUseHandler {
             }
                 if (ModConfig.getInstance().developerMode) {
                     SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: eat ignored (already eaten) player={} food={} eaten={}", serverPlayer.getName().getString(), id, current);
+                    java.util.Map<String, String> _i = new java.util.LinkedHashMap<>();
+                    _i.put("event", "eat_ignored");
+                    _i.put("player", serverPlayer.getName().getString());
+                    _i.put("food", id);
+                    _i.put("eaten", current.toString());
+                    SpiceOfLifeFabricFlavor.writeStructuredDevLog(_i);
                 }
         }
     }
@@ -185,6 +213,11 @@ public class FoodUseHandler {
                             NbtCompound v = (NbtCompound) verify;
                             if (v.contains(CONSUMED_KEY, 9)) {
                                 SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: persistent reflection write verified for player {}: {}", player.getName().getString(), v.getList(CONSUMED_KEY, 8));
+                                java.util.Map<String, String> _r = new java.util.LinkedHashMap<>();
+                                _r.put("event", "persistent_reflection_write_verified");
+                                _r.put("player", player.getName().getString());
+                                _r.put("consumed", v.getList(CONSUMED_KEY, 8).toString());
+                                SpiceOfLifeFabricFlavor.writeStructuredDevLog(_r);
                             } else {
                                 SpiceOfLifeFabricFlavor.LOGGER.warn("sol2f: persistent reflection write did not find {} for player {}", CONSUMED_KEY, player.getName().getString());
                             }
@@ -214,6 +247,11 @@ public class FoodUseHandler {
                     NbtCompound root = check.getCompound(PERSISTENT_ROOT);
                     if (root.contains(CONSUMED_KEY, 9)) {
                         SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: fallback write verified for player {}: {}", player.getName().getString(), root.getList(CONSUMED_KEY, 8));
+                        java.util.Map<String, String> _rf = new java.util.LinkedHashMap<>();
+                        _rf.put("event", "fallback_write_verified");
+                        _rf.put("player", player.getName().getString());
+                        _rf.put("consumed", root.getList(CONSUMED_KEY, 8).toString());
+                        SpiceOfLifeFabricFlavor.writeStructuredDevLog(_rf);
                     } else {
                         SpiceOfLifeFabricFlavor.LOGGER.warn("sol2f: fallback write did not find {} in player {}'s persistent root", CONSUMED_KEY, player.getName().getString());
                     }
