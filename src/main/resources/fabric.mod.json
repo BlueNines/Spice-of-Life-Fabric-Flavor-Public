@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "sol2f",
-	"version": "2.0",
+	"version": "2.1.0",
 	"name": "Spice of Life:Fabric Flavor",
 	"description": "A Fabric port of Spice of Life that rewards dietary variety: eating new foods increases your max health. This build is maintained by xianfish.",
 	"authors": [
