@@ -3,7 +3,6 @@ package com.sol2f;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-// optional runtime file appender imports
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.io.BufferedWriter;
@@ -11,40 +10,36 @@ import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
 import java.time.format.DateTimeFormatter;
 
-import com.sol2f.config.ModConfig;
+import com.sol2f.config.Sol2FConfig;
+import me.shedaniel.autoconfig.AutoConfig;
+import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import com.sol2f.server.FoodUseHandler;
 import com.sol2f.server.ServerEventHandlers;
 import com.sol2f.command.FoodCommands;
-// removed food_record imports
 
 public class SpiceOfLifeFabricFlavor implements ModInitializer {
 	public static final String MOD_ID = "sol2f";
 
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
+	// 这个日志记录器用于向控制台和日志文件写入文本
+	// 最佳实践是使用你的模组ID作为日志记录器的名称
+	// 这样，就可以清楚地知道是哪个模组写入了信息、警告和错误
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-	// Fallback writer used when Logback is not available but developerMode=true
+	// 当Logback不可用但developerMode=true时使用的备用写入器
 	private static BufferedWriter DEV_FILE_WRITER = null;
 	private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	private static final DateTimeFormatter STARTUP_FILE_FMT = DateTimeFormatter.ofPattern("yyyy-M-d-HH-mm-ss");
 
 	@Override
 	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
 
 		LOGGER.info("SpiceOfLife: initializing");
-
-		// Load configuration
-		ModConfig.load();
-
-		// If developerMode is enabled, add a dedicated file appender under run/logs/sol2f
-		// Enable developer file logging via reflection to avoid compile-time dependency on Logback
-		try {
-			if (ModConfig.getInstance().developerMode) {
-				// Use Fabric game directory to avoid creating run/run when cwd differs
+		AutoConfig.register(Sol2FConfig.class, GsonConfigSerializer::new);
+		// 注册并加载配置（Cloth Config / Auto Config）
+		// 如果启用了developerMode，则在run/logs/sol2f下添加专用的文件附加器
+		// 通过反射启用开发者文件日志记录，以避免对Logback的编译时依赖
+			try {
+				if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
+				// 使用Fabric游戏目录以避免在当前工作目录不同时创建run/run
 				Path gameDir = net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir();
 				Path logsDir = gameDir.resolve("logs").resolve("sol2f");
 				if (!Files.exists(logsDir)) Files.createDirectories(logsDir);
@@ -52,11 +47,11 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 				String logFile = logsDir.resolve("sol2f_" + startupTime + ".log").toString();
 				Class<?> loggerFactoryClass = Class.forName("org.slf4j.LoggerFactory");
 
-				// Try to configure Logback dynamically if available
+				// 尝试动态配置Logback（如果可用）
 				try {
 					Class<?> loggerContextClass = Class.forName("ch.qos.logback.classic.LoggerContext");
 					Class<?> patternEncoderClass = Class.forName("ch.qos.logback.classic.encoder.PatternLayoutEncoder");
-					// ILoggingEvent type checked via reflection; no local var needed
+					// 通过反射检查ILoggingEvent类型；不需要本地变量
 					Class<?> fileAppenderClass = Class.forName("ch.qos.logback.core.FileAppender");
 
 					Object ctx = loggerFactoryClass.getMethod("getILoggerFactory").invoke(null);
@@ -82,7 +77,7 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 				} catch (Throwable t) {
 					LOGGER.warn("sol2f: Logback not available for developerMode file logging, falling back to simple file writer", t);
 					writeDevLog("sol2f: Logback not available for developerMode file logging, falling back to simple file writer: %s", t.toString());
-					// open a simple fallback writer for developer logs
+					// 为开发者日志打开一个简单的备用写入器
 					try {
 						DEV_FILE_WRITER = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile, true), java.nio.charset.StandardCharsets.UTF_8));
 						DEV_FILE_WRITER.write("--- sol2f developer log started at " + java.time.LocalDateTime.now().format(TIME_FMT) + " ---\n");
@@ -98,22 +93,22 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 			writeDevLog("sol2f: failed to enable developerMode file logger: %s", t.toString());
 		}
 
-		// Register server-side handlers
+		// 注册服务端处理器
 		FoodUseHandler.register();
 		ServerEventHandlers.register();
 		FoodCommands.register();
-		// register Food Record item
-	// food_record item removed
+		// 注册食物记录物品
+	// 已移除食物记录物品
 
 		LOGGER.info("SpiceOfLife: initialized");
 	}
 
 	public static void writeDevLog(String fmt, Object... args) {
-		// Backwards-compatible: log formatted message to console and to structured file line (as "message" field)
+		// 向后兼容：将格式化消息记录到控制台和结构化文件行（作为"message"字段）
 		try {
 			LOGGER.info(fmt.replace("{}", "%s"), args);
 		} catch (Throwable t) {
-			// ignore
+			// 忽略
 		}
 		if (DEV_FILE_WRITER != null) {
 			try {
@@ -122,7 +117,7 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 				m.put("message", msg);
 				writeStructuredDevLog(m);
 			} catch (Throwable t) {
-				// fail silently
+				// 静默失败
 			}
 		}
 	}
@@ -145,7 +140,7 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 				String k = e.getKey();
 				String v = e.getValue();
 				if (v == null) v = "";
-				// escape double quotes and backslashes in value
+				// 转义值中的双引号和反斜杠
 				v = v.replace("\\", "\\\\").replace("\"", "\\\"");
 				sb.append('"').append(k).append('"').append("=").append('"').append(v).append('"');
 			}
@@ -154,7 +149,7 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 			DEV_FILE_WRITER.write(sb.toString());
 			DEV_FILE_WRITER.flush();
 		} catch (Throwable t) {
-			// fail silently
+			// 静默失败
 		}
 	}
 }

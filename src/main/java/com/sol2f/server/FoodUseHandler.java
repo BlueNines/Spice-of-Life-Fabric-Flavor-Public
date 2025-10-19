@@ -1,6 +1,7 @@
 package com.sol2f.server;
 
-import com.sol2f.config.ModConfig;
+import com.sol2f.config.Sol2FConfig;
+import me.shedaniel.autoconfig.AutoConfig;
 import com.sol2f.SpiceOfLifeFabricFlavor;
 import net.minecraft.text.Text;
 import net.minecraft.item.ItemStack;
@@ -19,9 +20,9 @@ import net.minecraft.nbt.NbtString;
 
 public class FoodUseHandler {
 
-    // keep register for initializer; no runtime registration needed when using mixin
+    // 为初始化器保留注册；使用mixin时不需要运行时注册
     public static void register() {
-    // registration placeholder (server event handlers live in ServerEventHandlers)
+    // 注册占位符（服务器事件处理程序位于ServerEventHandlers中）
     }
 
     public static void onFoodEaten(ServerPlayerEntity serverPlayer, ItemStack stack) {
@@ -29,12 +30,12 @@ public class FoodUseHandler {
 
     String id = Registries.ITEM.getId(stack.getItem()).toString();
 
-        // Use synchronized block on the player to avoid race conditions where two events
-        // both read NBT before either writes it and thus both send the first-eaten message.
+        // 在玩家上使用同步块以避免竞争条件，其中两个事件
+        // 都在写入之前读取NBT，因此都发送首次食用消息
         synchronized (serverPlayer) {
-            // Entry log for developerMode: record attempt
+            // developerMode的入口日志：记录尝试
             try {
-                if (ModConfig.getInstance().developerMode) {
+                if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
                     SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: eat attempt player={} food={}", serverPlayer.getName().getString(), id);
                     java.util.Map<String, String> _f = new java.util.LinkedHashMap<>();
                     _f.put("event", "eat_attempt");
@@ -43,11 +44,11 @@ public class FoodUseHandler {
                     SpiceOfLifeFabricFlavor.writeStructuredDevLog(_f);
                 }
             } catch (Throwable t) {
-                // ignore logging failures
+                // 忽略日志记录失败
             }
-            // re-read authoritative NBT inside the lock
+            // 在锁内重新读取权威NBT，你这NBT保真吗？
             Set<String> current = getEatenFoods(serverPlayer);
-            if (ModConfig.getInstance().developerMode) {
+            if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
                 SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: before change player={} eaten={}", serverPlayer.getName().getString(), current);
                 java.util.Map<String, String> _b = new java.util.LinkedHashMap<>();
                 _b.put("event", "before_change");
@@ -56,28 +57,28 @@ public class FoodUseHandler {
                 SpiceOfLifeFabricFlavor.writeStructuredDevLog(_b);
             }
             if (!current.contains(id)) {
-                // update and persist
+                // 更新并持久化，存到NBT里
                 current.add(id);
                 saveEatenFoods(serverPlayer, current);
 
-                // re-read authoritative persistent set to ensure write succeeded
+                // 重新读取权威持久化集合以确保写入成功，虽然但是网页后端的写入+应用逻辑就是这样的，mod里就这样吧
                 Set<String> authoritative = getEatenFoods(serverPlayer);
                 if (!authoritative.contains(id)) {
                     SpiceOfLifeFabricFlavor.LOGGER.warn("sol2f: after save, authoritative eaten set does not contain {} for player {}", id, serverPlayer.getName().getString());
                 } else {
-                    // apply health modifier using authoritative updated set
+                    // 使用权威更新集应用生命值修饰符，直接应用新上限而不是加值
                     double prevMax = serverPlayer.getMaxHealth();
                     applyHealthModifier(serverPlayer, authoritative);
                     double newMax = serverPlayer.getMaxHealth();
                     syncToClient(serverPlayer, authoritative);
 
-                    // send message once based on authoritative NBT state
+                    // 基于NBT状态在消息栏发送一次消息
                     serverPlayer.sendMessage(Text.translatable("sol2f.msg.first_eaten", Text.literal(id)), false);
                     SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: Player {} first ate {}", serverPlayer.getName().getString(), id);
 
-                    // Developer log: record post-change details
+                    // 写日志：记录变更后详情，
                     try {
-                        if (ModConfig.getInstance().developerMode) {
+                        if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
                             SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: after eat player={} food={} prevMax={} newMax={} eaten={}", serverPlayer.getName().getString(), id, prevMax, newMax, authoritative);
                             java.util.Map<String, String> fields = new java.util.LinkedHashMap<>();
                             fields.put("event", "after_eat");
@@ -87,17 +88,17 @@ public class FoodUseHandler {
                             fields.put("newMax", Double.toString(newMax));
                             fields.put("eaten", authoritative.toString());
                             fields.put("unique", Integer.toString(authoritative.size()));
-                            fields.put("perHp", Double.toString(ModConfig.getInstance().healthyGain));
-                            fields.put("bonus", Double.toString(Math.min(ModConfig.getInstance().defaultHealthy + authoritative.size() * ModConfig.getInstance().healthyGain, ModConfig.getInstance().maxHealthy) - ModConfig.getInstance().defaultHealthy));
+                            fields.put("perHp", Double.toString(AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthyGain));
+                            fields.put("bonus", Double.toString(Math.min(AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.defaultHealthy + authoritative.size() * AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthyGain, AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.maxHealthy) - AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.defaultHealthy));
                             fields.put("modifier_uuid", HEALTH_MODIFIER_ID.toString());
                             SpiceOfLifeFabricFlavor.writeStructuredDevLog(fields);
                         }
                     } catch (Throwable t) {
-                        // ignore logging failures
+                        // 忽略日志记录失败。反正先给债欠着，火还没出现想什么烧眉毛，大不了改成失败写入“unfiled”
                     }
                 }
             }
-                if (ModConfig.getInstance().developerMode) {
+                if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
                     SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: eat ignored (already eaten) player={} food={} eaten={}", serverPlayer.getName().getString(), id, current);
                     java.util.Map<String, String> _i = new java.util.LinkedHashMap<>();
                     _i.put("event", "eat_ignored");
@@ -110,7 +111,7 @@ public class FoodUseHandler {
     }
 
     public static void initializePlayer(ServerPlayerEntity player) {
-        double defaultHealthy = ModConfig.getInstance().defaultHealthy;
+    double defaultHealthy = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.defaultHealthy;
         player.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(defaultHealthy);
         Set<String> eaten = getEatenFoods(player);
         applyHealthModifier(player, eaten);
@@ -124,7 +125,7 @@ public class FoodUseHandler {
     private static final String DATA_VERSION = "data_version";
     private static final int CURRENT_VERSION = 1;
 
-    // Reflection helper: attempt to call IEntityDataSaver.getPersistentData() if available.
+    // 反射助手：如果可用，尝试调用IEntityDataSaver.getPersistentData()
     private static java.lang.reflect.Method persistentGetterMethod = null;
     private static boolean persistentReflectionInitialized = false;
 
@@ -132,19 +133,19 @@ public class FoodUseHandler {
         if (persistentReflectionInitialized) return;
         persistentReflectionInitialized = true;
             try {
-                // try legacy package then our own package
+                // 尝试旧包然后是我们自己的包
                 Class<?> saver = null;
                 try {
                     saver = Class.forName("com.food_advancement.util.IEntityDataSaver");
                 } catch (Throwable t) {
-                    // ignore
+                    // 忽略
                 }
                 if (saver == null) {
                     saver = Class.forName("com.sol2f.util.IEntityDataSaver");
                 }
                 persistentGetterMethod = saver.getMethod("getPersistentData");
         } catch (Throwable t) {
-            // no-op: will fallback to read/writeNbt
+            // 无操作：将回退到read/writeNbt
                 persistentGetterMethod = null;
         }
     }
@@ -162,7 +163,7 @@ public class FoodUseHandler {
             }
         }
 
-        // fallback: read full player NBT and get or create our root compound
+        // 回退：读取完整的玩家NBT并获取或创建我们的根复合体
         try {
             NbtCompound nbt = new NbtCompound();
             player.writeNbt(nbt);
@@ -170,19 +171,19 @@ public class FoodUseHandler {
                 return nbt.getCompound(PERSISTENT_ROOT);
             }
 
-            // If legacy key exists at root, migrate into our root compound
+            // 如果根部存在旧密钥，则迁移到我们的根复合体中
             if (nbt.contains(LEGACY_KEY, 9)) {
                 NbtList legacy = nbt.getList(LEGACY_KEY, 8);
                 NbtCompound root = new NbtCompound();
                 root.put(CONSUMED_KEY, legacy);
                 root.putInt(DATA_VERSION, CURRENT_VERSION);
-                // write back
+                // 写回
                 nbt.put(PERSISTENT_ROOT, root);
                 player.readNbt(nbt);
                 return root;
             }
 
-            // create empty root and write
+            // 创建空根并写入
             NbtCompound root = new NbtCompound();
             root.putInt(DATA_VERSION, CURRENT_VERSION);
             nbt.put(PERSISTENT_ROOT, root);
@@ -201,12 +202,12 @@ public class FoodUseHandler {
                 Object res = persistentGetterMethod.invoke(player);
                 if (res instanceof NbtCompound) {
                     NbtCompound target = (NbtCompound) res;
-                    // copy keys from data into target
+                    // 将数据中的键复制到目标中
                     for (String key : data.getKeys()) {
                         target.put(key, data.get(key));
                     }
                     SpiceOfLifeFabricFlavor.LOGGER.debug("sol2f: attempted reflection write to persistent data for player {}", player.getName().getString());
-                    // verify by invoking getter again
+                    // 通过再次调用getter来验证
                     try {
                         Object verify = persistentGetterMethod.invoke(player);
                         if (verify instanceof NbtCompound) {
@@ -225,7 +226,7 @@ public class FoodUseHandler {
                     } catch (Throwable t) {
                         SpiceOfLifeFabricFlavor.LOGGER.debug("sol2f: verification after reflection write failed", t);
                     }
-                    // don't return; also perform fallback write to ensure persistence across different implementations
+                    // 不返回；也执行回退写入以确保在不同实现间持久化
                     SpiceOfLifeFabricFlavor.LOGGER.debug("sol2f: falling back to NBT write after reflection attempt for player {}", player.getName().getString());
                 }
             } catch (Throwable t) {
@@ -233,13 +234,13 @@ public class FoodUseHandler {
             }
         }
 
-        // fallback: put under PERSISTENT_ROOT in player's main NBT
+        // 回退：放入玩家主NBT中的PERSISTENT_ROOT下
         try {
             NbtCompound nbt = new NbtCompound();
             player.writeNbt(nbt);
             nbt.put(PERSISTENT_ROOT, data);
             player.readNbt(nbt);
-            // verify by reading back player's NBT
+            // 通过重新读取玩家的NBT来验证
             try {
                 NbtCompound check = new NbtCompound();
                 player.writeNbt(check);
@@ -290,7 +291,7 @@ public class FoodUseHandler {
             persistent.put(CONSUMED_KEY, newList);
             persistent.putInt(DATA_VERSION, CURRENT_VERSION);
             writePersistentCompound(player, persistent);
-            // read back and log authoritative persistent content
+            // 读回并记录权威持久化内容
             try {
                 NbtCompound after = readPersistentCompound(player);
                 SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: after save for player {} persistent contains: {}", player.getName().getString(), after.contains(CONSUMED_KEY, 9) ? after.getList(CONSUMED_KEY, 8) : "<none>");
@@ -341,7 +342,7 @@ public class FoodUseHandler {
                 return;
             }
 
-            double defaultBase = ModConfig.getInstance().defaultHealthy;
+            double defaultBase = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.defaultHealthy;
             attr.setBaseValue(defaultBase);
             SpiceOfLifeFabricFlavor.LOGGER.info("Set base health to {} for player {}", defaultBase, player.getName().getString());
 
@@ -349,11 +350,11 @@ public class FoodUseHandler {
             SpiceOfLifeFabricFlavor.LOGGER.info("Removed existing health modifier for player {}", player.getName().getString());
 
             int unique = eatenFoods.size();
-            // Interpret healthyGain as HP added per unique food item (in HP units)
-            double perHp = ModConfig.getInstance().healthyGain;
-            double healthBonus = unique * perHp; // total HP bonus from unique foods
+            // 将healthyGain解释为每个独特食物项目增加的生命值（以生命值单位）
+            double perHp = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthyGain;
+            double healthBonus = unique * perHp; // 来自独特食物的总生命值奖励
 
-            double maxHealthy = ModConfig.getInstance().maxHealthy;
+            double maxHealthy = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.maxHealthy;
             double newMaxHealth = Math.min(defaultBase + healthBonus, maxHealthy);
 
             if (newMaxHealth > defaultBase) {
@@ -363,8 +364,15 @@ public class FoodUseHandler {
             } else {
                 SpiceOfLifeFabricFlavor.LOGGER.info("No health bonus applied. Unique foods: {}, perHp: {}, computed bonus: {}, Max health: {}", unique, perHp, healthBonus, maxHealthy);
             }
-
-            player.heal((float) player.getMaxHealth());
+            // 恢复生命逻辑
+            if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healToMaxOnIncrease) { // 恢复最大生命
+                player.setHealth(player.getMaxHealth());
+            } else if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthIncrease > 0) { // 恢复指定生命
+                float currentHealth = player.getHealth();
+                float increase = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthIncrease;
+                float newHealth = Math.min(currentHealth + increase, (float)player.getMaxHealth());
+                player.setHealth(newHealth);
+            } else {}
             SpiceOfLifeFabricFlavor.LOGGER.info("Player {} healed to max health: {}", player.getName().getString(), player.getMaxHealth());
         } catch (Exception e) {
             SpiceOfLifeFabricFlavor.LOGGER.error("Failed to apply health modifier for player {}", player.getName().getString(), e);

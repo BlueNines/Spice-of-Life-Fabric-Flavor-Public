@@ -3,5 +3,16 @@
   "commands.sol2f.clearhealthy.success": "[sol2f] 已重置",
   "commands.generic.permission": "你没有权限运行此命令",
   "commands.sol2f.clearhealthy.failed": "[sol2f] 操作失败",
-  "sol2f.msg.first_eaten": "你发现了：%s"
+  "sol2f.msg.first_eaten": "你发现了：%s",
+
+  "text.autoconfig.sol2f.option.Sol2FConfig.health": "血量设置",
+  "text.autoconfig.sol2f.option.Sol2FConfig.features": "功能设置",
+  "text.autoconfig.sol2f.option.Sol2FConfig.health.maxHealthy": "最大血量",
+  "text.autoconfig.sol2f.option.Sol2FConfig.health.defaultHealthy": "默认血量",
+  "text.autoconfig.sol2f.option.Sol2FConfig.features.healthyGain": "血量增幅",
+  "text.autoconfig.sol2f.option.Sol2FConfig.features.resetOnDeath": "死亡重置",
+  "text.autoconfig.sol2f.option.Sol2FConfig.health.maxHealthy.@Tooltip": "必须为 2 的倍数，范围 2~240",
+  "text.autoconfig.sol2f.option.Sol2FConfig.health.defaultHealthy.@Tooltip": "必须为 2 的倍数，范围 2~100",
+  "text.autoconfig.sol2f.option.Sol2FConfig.features.healthyGain.@Tooltip": "每种新食物增加的最大血量.必须为 2 的倍数，范围 0~20",
+  "text.autoconfig.sol2f.option.Sol2FConfig.features.resetOnDeath.@Tooltip": "启用后，玩家死亡时血量将重置为默认值。"
 }

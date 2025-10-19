@@ -25,7 +25,7 @@ public class FoodCommands {
                     return 0;
                 }
 
-                // Use central clear logic to ensure the same behavior as respawn reset
+                // 使用中央清除逻辑确保与重生重置相同的行为
                 try {
                     com.sol2f.server.FoodUseHandler.clearEatenFoods(player);
                     src.sendFeedback(() -> Text.translatable("commands.sol2f.clearhealthy.success"), false);

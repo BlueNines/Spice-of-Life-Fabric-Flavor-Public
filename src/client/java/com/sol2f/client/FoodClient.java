@@ -24,7 +24,7 @@ public class FoodClient implements ClientModInitializer {
             List<String> list = S2CFoodListSync.readList(buf);
             consumed.clear();
             consumed.addAll(list);
-            // Removed redundant client-to-server request for food list
+            // 移除了冗余的客户端到服务器的食物列表请求
         });
 
         ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
@@ -40,7 +40,7 @@ public class FoodClient implements ClientModInitializer {
         return consumed.contains(id);
     }
 
-    // return a stable snapshot for rendering on client screens
+    // 返回一个稳定的快照用于客户端屏幕渲染
     public static java.util.List<String> getConsumedSnapshot() {
         synchronized (consumed) {
             return new java.util.ArrayList<>(consumed);

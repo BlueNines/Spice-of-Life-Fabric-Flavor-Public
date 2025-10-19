@@ -6,7 +6,7 @@ import net.fabricmc.api.ClientModInitializer;
 public class SpiceOfLifeFabricFlavorClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
-		// Delegate to FoodClient for client-specific initialization
+		// 委托给FoodClient进行客户端特定的初始化
 		new FoodClient().onInitializeClient();
 	}
 }
