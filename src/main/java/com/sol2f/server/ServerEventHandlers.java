@@ -1,33 +1,50 @@
 package com.sol2f.server;
 
+import java.util.Set;
+
 import com.sol2f.SpiceOfLifeFabricFlavor;
+import net.minecraft.server.network.ServerPlayerEntity;
 import com.sol2f.config.Sol2FConfig;
 import me.shedaniel.autoconfig.AutoConfig;
-import com.sol2f.network.S2CFoodListSync;
+import com.sol2f.util.IEntityDataSaver;
+
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 
 public class ServerEventHandlers {
     public static void register() {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            try {
-                if (handler.player == null) return;
-                FoodUseHandler.initializePlayer(handler.player);
-            } catch (Exception e) {
-                SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: error during player join init", e);
+            ServerPlayerEntity player = handler.player;// 获取玩家实例
+            if (player == null) return;// 防止为null，避免空指针异常
+
+            Set<String> eaten = FoodUseHandler.getEatenFoods(player);// 返回空集而不是null，避免空指针异常
+            FoodUseHandler.applyHealthModifier(player, eaten);// 应用生命值修饰符，eaten不会为null，上面的方法保证了这一点
+            FoodUseHandler.syncToClient(player, eaten);// 同步已消耗列表到客户端
+        });
+
+        // 复制逻辑
+        ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
+            if(!alive && !AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.resetOnDeath) {
+                if (oldPlayer instanceof IEntityDataSaver olDataSaver && newPlayer instanceof IEntityDataSaver newDataSaver) {// 确保旧玩家和新玩家都实现了我们的IEntityDataSaver接口
+                    // 复制持久化数据
+                    newDataSaver.getPersistentData().copyFrom(olDataSaver.getPersistentData());
+                }
             }
         });
 
-        // 重生时，重新应用生命值修饰符并可选择重置已消耗列表
-        net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
-            try {
-                    if (!alive && AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.resetOnDeath) {
+        // 重置和应用逻辑
+        ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
+            if(!alive) {
+                if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.resetOnDeath) {
+                    // 重置已消耗的食物列表
                     FoodUseHandler.clearEatenFoods(newPlayer);
                 } else {
-                    FoodUseHandler.initializePlayer(newPlayer);
+                    // 复制旧玩家的已消耗食物列表到新玩家
+                    Set<String> eaten = FoodUseHandler.getEatenFoods(newPlayer);
+                    FoodUseHandler.applyHealthModifier(newPlayer, eaten);
+                    FoodUseHandler.syncToClient(newPlayer, eaten);
                 }
-            } catch (Exception e) {
-                SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: error during player respawn init", e);
             }
         });
 
@@ -35,12 +52,8 @@ public class ServerEventHandlers {
         // 这允许他们立即要求服务器重新发送列表。
         ServerPlayNetworking.registerGlobalReceiver(com.sol2f.network.FoodPackets.C2S_REQUEST_LIST, (server, player, handler, buf, responder) -> {
             try {
-                net.minecraft.nbt.NbtCompound nbt = new net.minecraft.nbt.NbtCompound();
-                player.writeNbt(nbt);
-                net.minecraft.nbt.NbtList consumed = nbt.contains("sol2f:consumed_foods") ? nbt.getList("sol2f:consumed_foods", 8) : new net.minecraft.nbt.NbtList();
-                java.util.List<String> list = new java.util.ArrayList<>();
-                for (int i = 0; i < consumed.size(); i++) list.add(consumed.getString(i));
-                com.sol2f.network.S2CFoodListSync.sendTo(player, list);
+                Set<String> eaten = FoodUseHandler.getEatenFoods(player);
+                FoodUseHandler.syncToClient(player, eaten);
             } catch (Exception e) {
                 SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: error responding to client list request", e);
             }

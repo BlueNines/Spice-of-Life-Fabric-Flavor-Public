@@ -21,14 +21,14 @@ public abstract class PlayerEntityMixin implements IEntityDataSaver {
         return persistentData;
     }
 
-    @Inject(method = "writeNbt", at = @At("HEAD"))
+    @Inject(method = "writeNbt", at = @At("TAIL"))
     protected void injectWriteMethod(NbtCompound nbt, CallbackInfoReturnable<NbtCompound> info) {
         if (persistentData != null) {
             nbt.put("sol2f", persistentData);
         }
     }
 
-    @Inject(method = "readNbt", at = @At("HEAD"))
+    @Inject(method = "readNbt", at = @At("TAIL"))
     protected void injectReadMethod(NbtCompound nbt, CallbackInfo info) {
         if (nbt.contains("sol2f", 10)) {
             persistentData = nbt.getCompound("sol2f");

@@ -29,7 +29,7 @@ public class Sol2FConfig implements ConfigData {
         public int healthyGain = 4;
 
         @ConfigEntry.Gui.Tooltip
-        public boolean resetOnDeath = true;
+        public boolean resetOnDeath = false;
 
         @ConfigEntry.Gui.Excluded
         public boolean developerMode = false;

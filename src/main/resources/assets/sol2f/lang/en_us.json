@@ -3,5 +3,21 @@
   "commands.sol2f.clearhealthy.success": "[sol2f] Progress reset",
   "commands.generic.permission": "You don't have permission to run this command",
   "commands.sol2f.clearhealthy.failed": "[sol2f] Operation failed",
-  "sol2f.msg.first_eaten": "You have discovered: %s"
+  "sol2f.msg.first_eaten": "You have discovered: %s",
+
+    "text.autoconfig.spice-of-life-fabric-flavor.title": "Spice of Life: Fabric Flavor - option",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.healthy": "Health Settings",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features": "Feature Settings",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.healthy.maxHealthy": "Maximum Health",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.healthy.defaultHealthy": "Default Health",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.healthyGain": "Health Gain",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.resetOnDeath": "Reset on Death",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.healToMaxOnIncrease": "Heal to Full on Gain",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.healthIncrease": "Health Recovery on Gain",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.healthy.maxHealthy.@Tooltip": "Must be a multiple of 2, in the range 2–240.",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.healthy.defaultHealthy.@Tooltip": "Must be a multiple of 2, in the range 2–100.",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.healthyGain.@Tooltip": "Maximum health gained per new food. Must be a multiple of 2, in the range 0–20.",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.resetOnDeath.@Tooltip": "When enabled, player health will reset to the default value upon death.",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.healToMaxOnIncrease.@Tooltip": "When health maximum increases, fully restore health.",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.healthIncrease.@Tooltip": "Amount of health restored when maximum health increases. Must be a multiple of 2."
 }

@@ -1,7 +1,23 @@
 {
   "sol2f.tooltip.unconsumed": "玄物藏真，形貌难测",
-  "commands.sol2f.clearhealthy.success": "［食進］盡復本源（操作成功，已重置）",
-  "commands.generic.permission": "爾無權行此令（无命令权限）",
-  "commands.sol2f.clearhealthy.failed": "［食進］天不予應（操作失败）",
-  "sol2f.msg.first_eaten": "汝獲見：%s"
+  "commands.sol2f.clearhealthy.success": "［sol2f］盡復本源",
+  "commands.generic.permission": "爾無權行此令",
+  "commands.sol2f.clearhealthy.failed": "［sol2f］天不予應",
+  "sol2f.msg.first_eaten": "汝獲見：%s",
+
+  "text.autoconfig.spice-of-life-fabric-flavor.title": "Spice of Life: Fabric Flavor 設置",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.healthy": "命脈設置",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features": "機要設置",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.healthy.maxHealthy": "至高命脈",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.healthy.defaultHealthy": "初始命脈",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.healthyGain": "命脈增益",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.resetOnDeath": "身死歸元",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.healToMaxOnIncrease": "增脈即滿",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.healthIncrease": "增脈回元",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.healthy.maxHealthy.@Tooltip": "須為二之倍數，範圍二至二百四十。",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.healthy.defaultHealthy.@Tooltip": "須為二之倍數，範圍二至一百。",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.healthyGain.@Tooltip": "每得新食而增之命脈，須為二之倍數，範圍零至二十。",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.resetOnDeath.@Tooltip": "啟用後，若遊俠身死，則命脈將歸於初始。",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.healToMaxOnIncrease.@Tooltip": "命脈上限增時，即刻回滿。",
+  "text.autoconfig.spice-of-life-fabric-flavor.option.features.healthIncrease.@Tooltip": "命脈上限增時，所復之數，須為二之倍數。"
 }

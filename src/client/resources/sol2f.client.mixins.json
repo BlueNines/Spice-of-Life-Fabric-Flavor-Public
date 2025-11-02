@@ -2,9 +2,7 @@
 	"required": true,
 	"package": "com.sol2f.mixin.client",
 	"compatibilityLevel": "JAVA_17",
-	"mixins": [
-		"ItemStackClientMixin"
-	],
+	"mixins": [],
 	"injectors": {
 		"defaultRequire": 1
 	}

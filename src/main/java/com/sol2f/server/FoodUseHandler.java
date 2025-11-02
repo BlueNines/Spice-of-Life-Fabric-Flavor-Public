@@ -46,7 +46,7 @@ public class FoodUseHandler {
             } catch (Throwable t) {
                 // 忽略日志记录失败
             }
-            // 在锁内重新读取权威NBT，你这NBT保真吗？
+            // 在锁内重新读取权威NBT
             Set<String> current = getEatenFoods(serverPlayer);
             if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
                 SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: before change player={} eaten={}", serverPlayer.getName().getString(), current);
@@ -61,7 +61,7 @@ public class FoodUseHandler {
                 current.add(id);
                 saveEatenFoods(serverPlayer, current);
 
-                // 重新读取权威持久化集合以确保写入成功，虽然但是网页后端的写入+应用逻辑就是这样的，mod里就这样吧
+                // 重新读取权威持久化集合以确保写入成功
                 Set<String> authoritative = getEatenFoods(serverPlayer);
                 if (!authoritative.contains(id)) {
                     SpiceOfLifeFabricFlavor.LOGGER.warn("sol2f: after save, authoritative eaten set does not contain {} for player {}", id, serverPlayer.getName().getString());
@@ -94,7 +94,7 @@ public class FoodUseHandler {
                             SpiceOfLifeFabricFlavor.writeStructuredDevLog(fields);
                         }
                     } catch (Throwable t) {
-                        // 忽略日志记录失败。反正先给债欠着，火还没出现想什么烧眉毛，大不了改成失败写入“unfiled”
+                        // 忽略日志记录失败
                     }
                 }
             }
@@ -110,164 +110,32 @@ public class FoodUseHandler {
         }
     }
 
-    public static void initializePlayer(ServerPlayerEntity player) {
-    double defaultHealthy = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.defaultHealthy;
-        player.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(defaultHealthy);
-        Set<String> eaten = getEatenFoods(player);
-        applyHealthModifier(player, eaten);
-        syncToClient(player, eaten);
-    }
-
     private static final UUID HEALTH_MODIFIER_ID = UUID.fromString("a6b4d2a1-9f23-41a2-a6c6-b56db969f6de");
-    private static final String PERSISTENT_ROOT = "sol2f";
     private static final String CONSUMED_KEY = "consumed_foods";
-    private static final String LEGACY_KEY = "sol2f:consumed_foods";
     private static final String DATA_VERSION = "data_version";
     private static final int CURRENT_VERSION = 1;
 
-    // 反射助手：如果可用，尝试调用IEntityDataSaver.getPersistentData()
-    private static java.lang.reflect.Method persistentGetterMethod = null;
-    private static boolean persistentReflectionInitialized = false;
-
-    private static void ensurePersistentReflection() {
-        if (persistentReflectionInitialized) return;
-        persistentReflectionInitialized = true;
-            try {
-                // 尝试旧包然后是我们自己的包
-                Class<?> saver = null;
-                try {
-                    saver = Class.forName("com.food_advancement.util.IEntityDataSaver");
-                } catch (Throwable t) {
-                    // 忽略
-                }
-                if (saver == null) {
-                    saver = Class.forName("com.sol2f.util.IEntityDataSaver");
-                }
-                persistentGetterMethod = saver.getMethod("getPersistentData");
-        } catch (Throwable t) {
-            // 无操作：将回退到read/writeNbt
-                persistentGetterMethod = null;
-        }
-    }
-
     private static NbtCompound readPersistentCompound(ServerPlayerEntity player) {
-        ensurePersistentReflection();
-        if (persistentGetterMethod != null) {
-            try {
-                Object res = persistentGetterMethod.invoke(player);
-                if (res instanceof NbtCompound) {
-                    return (NbtCompound) res;
-                }
-            } catch (Throwable t) {
-                SpiceOfLifeFabricFlavor.LOGGER.debug("Persistent reflection failed, falling back", t);
-            }
+        if (player instanceof com.sol2f.util.IEntityDataSaver saver) {
+            return saver.getPersistentData();
         }
 
-        // 回退：读取完整的玩家NBT并获取或创建我们的根复合体
-        try {
-            NbtCompound nbt = new NbtCompound();
-            player.writeNbt(nbt);
-            if (nbt.contains(PERSISTENT_ROOT, 10)) {
-                return nbt.getCompound(PERSISTENT_ROOT);
-            }
-
-            // 如果根部存在旧密钥，则迁移到我们的根复合体中
-            if (nbt.contains(LEGACY_KEY, 9)) {
-                NbtList legacy = nbt.getList(LEGACY_KEY, 8);
-                NbtCompound root = new NbtCompound();
-                root.put(CONSUMED_KEY, legacy);
-                root.putInt(DATA_VERSION, CURRENT_VERSION);
-                // 写回
-                nbt.put(PERSISTENT_ROOT, root);
-                player.readNbt(nbt);
-                return root;
-            }
-
-            // 创建空根并写入
-            NbtCompound root = new NbtCompound();
-            root.putInt(DATA_VERSION, CURRENT_VERSION);
-            nbt.put(PERSISTENT_ROOT, root);
-            player.readNbt(nbt);
-            return root;
-        } catch (Throwable t) {
-            SpiceOfLifeFabricFlavor.LOGGER.error("Failed to read persistent compound", t);
-            return new NbtCompound();
-        }
+        SpiceOfLifeFabricFlavor.LOGGER.error("Failed to read persistent compound");
+        return new NbtCompound();
     }
 
     private static void writePersistentCompound(ServerPlayerEntity player, NbtCompound data) {
-        ensurePersistentReflection();
-        if (persistentGetterMethod != null) {
-            try {
-                Object res = persistentGetterMethod.invoke(player);
-                if (res instanceof NbtCompound) {
-                    NbtCompound target = (NbtCompound) res;
-                    // 将数据中的键复制到目标中
-                    for (String key : data.getKeys()) {
-                        target.put(key, data.get(key));
-                    }
-                    SpiceOfLifeFabricFlavor.LOGGER.debug("sol2f: attempted reflection write to persistent data for player {}", player.getName().getString());
-                    // 通过再次调用getter来验证
-                    try {
-                        Object verify = persistentGetterMethod.invoke(player);
-                        if (verify instanceof NbtCompound) {
-                            NbtCompound v = (NbtCompound) verify;
-                            if (v.contains(CONSUMED_KEY, 9)) {
-                                SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: persistent reflection write verified for player {}: {}", player.getName().getString(), v.getList(CONSUMED_KEY, 8));
-                                java.util.Map<String, String> _r = new java.util.LinkedHashMap<>();
-                                _r.put("event", "persistent_reflection_write_verified");
-                                _r.put("player", player.getName().getString());
-                                _r.put("consumed", v.getList(CONSUMED_KEY, 8).toString());
-                                SpiceOfLifeFabricFlavor.writeStructuredDevLog(_r);
-                            } else {
-                                SpiceOfLifeFabricFlavor.LOGGER.warn("sol2f: persistent reflection write did not find {} for player {}", CONSUMED_KEY, player.getName().getString());
-                            }
-                        }
-                    } catch (Throwable t) {
-                        SpiceOfLifeFabricFlavor.LOGGER.debug("sol2f: verification after reflection write failed", t);
-                    }
-                    // 不返回；也执行回退写入以确保在不同实现间持久化
-                    SpiceOfLifeFabricFlavor.LOGGER.debug("sol2f: falling back to NBT write after reflection attempt for player {}", player.getName().getString());
-                }
-            } catch (Throwable t) {
-                SpiceOfLifeFabricFlavor.LOGGER.debug("Persistent reflection write failed, falling back", t);
+        if (player instanceof com.sol2f.util.IEntityDataSaver saver) {
+            NbtCompound persistent = saver.getPersistentData();
+            for (String key : data.getKeys()) {
+                persistent.put(key, data.get(key));
             }
+            return;
         }
-
-        // 回退：放入玩家主NBT中的PERSISTENT_ROOT下
-        try {
-            NbtCompound nbt = new NbtCompound();
-            player.writeNbt(nbt);
-            nbt.put(PERSISTENT_ROOT, data);
-            player.readNbt(nbt);
-            // 通过重新读取玩家的NBT来验证
-            try {
-                NbtCompound check = new NbtCompound();
-                player.writeNbt(check);
-                if (check.contains(PERSISTENT_ROOT, 10)) {
-                    NbtCompound root = check.getCompound(PERSISTENT_ROOT);
-                    if (root.contains(CONSUMED_KEY, 9)) {
-                        SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: fallback write verified for player {}: {}", player.getName().getString(), root.getList(CONSUMED_KEY, 8));
-                        java.util.Map<String, String> _rf = new java.util.LinkedHashMap<>();
-                        _rf.put("event", "fallback_write_verified");
-                        _rf.put("player", player.getName().getString());
-                        _rf.put("consumed", root.getList(CONSUMED_KEY, 8).toString());
-                        SpiceOfLifeFabricFlavor.writeStructuredDevLog(_rf);
-                    } else {
-                        SpiceOfLifeFabricFlavor.LOGGER.warn("sol2f: fallback write did not find {} in player {}'s persistent root", CONSUMED_KEY, player.getName().getString());
-                    }
-                } else {
-                    SpiceOfLifeFabricFlavor.LOGGER.warn("sol2f: fallback write did not produce persistent root for player {}", player.getName().getString());
-                }
-            } catch (Throwable t) {
-                SpiceOfLifeFabricFlavor.LOGGER.debug("sol2f: verification after fallback write failed", t);
-            }
-        } catch (Throwable t) {
-            SpiceOfLifeFabricFlavor.LOGGER.error("Failed to write persistent compound", t);
-        }
+        SpiceOfLifeFabricFlavor.LOGGER.error("Failed to write persistent compound. Player is not IEntityDataSaver!");
     }
 
-    private static Set<String> getEatenFoods(ServerPlayerEntity player) {
+    public static Set<String> getEatenFoods(ServerPlayerEntity player) {
         try {
             NbtCompound persistent = readPersistentCompound(player);
             NbtList consumed = persistent.contains(CONSUMED_KEY, 9) ? persistent.getList(CONSUMED_KEY, 8) : new NbtList();
@@ -326,8 +194,9 @@ public class FoodUseHandler {
     public static void clearEatenFoods(ServerPlayerEntity player) {
         Set<String> empty = new HashSet<>();
         saveEatenFoods(player, empty);
-        applyHealthModifier(player, empty);
-        syncToClient(player, empty);
+        Set<String> eaten = getEatenFoods(player);// 确保数据一致性，方便测试发现错误
+        applyHealthModifier(player, eaten);
+        syncToClient(player, eaten);
     }
 
     public static void applyHealthModifier(ServerPlayerEntity player) {
