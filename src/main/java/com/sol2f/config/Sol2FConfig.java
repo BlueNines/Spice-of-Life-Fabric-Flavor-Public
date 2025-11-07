@@ -25,8 +25,16 @@ public class Sol2FConfig implements ConfigData {
 
     public static class FeatureSetting {
         @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 30)
+        public int healthyGain = 2;
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 20)
+        public int Increasefrequency = 0;
+
+        @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 2, max = 30)
-        public int healthyGain = 4;
+        public int frequencyGain = 2;
 
         @ConfigEntry.Gui.Tooltip
         public boolean resetOnDeath = false;
@@ -37,7 +45,7 @@ public class Sol2FConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip
         public boolean healToMaxOnIncrease = false;
 
-        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.Gui.Tooltip// 恢复血量配置
         public int healthIncrease = 0;
     }
 }
