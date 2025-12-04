@@ -30,13 +30,14 @@ public class FoodBookScreen extends Screen {
     private static final int ITEMS_PER_PAGE = 96;// 每页显示的物品数量
     private ItemStack hoveredStack = ItemStack.EMPTY;// 当前悬停物品，用于绘制tooltip
 
-    // 绘制基准点，便于后续绘制计算
-    int guiLeft = (this.width - MAIN_PANEL_WIDTH) / 2; 
-    int guiTop = (this.height - GUI_HEIGHT) / 2;
-
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {// 页面循环绘制逻辑
+
+        // 绘制基准点，后续绘制计算
+        int guiLeft = (this.width - MAIN_PANEL_WIDTH) / 2;
+        int guiTop = (this.height - GUI_HEIGHT) / 2;
+
         this.renderBackground(context);// 绘制半透明黑色背景
 
         this.hoveredStack = ItemStack.EMPTY;// m每一帧重置悬停物品
@@ -62,8 +63,8 @@ public class FoodBookScreen extends Screen {
             title,
             guiLeft + 9,
             guiTop + 5,
-            0xFFFFFF,
-            true
+            0x000000,
+            false
         );
 
         // 以下绘制滑块
@@ -93,11 +94,11 @@ public class FoodBookScreen extends Screen {
         if(!hoveredStack.isEmpty()) {
             List<Text> tooltip = hoveredStack.getTooltip(
                 MinecraftClient.getInstance().player,
-                TooltipContext.Default.BASIC // 或 .ADVANCED
+                TooltipContext.Default.ADVANCED // .ADVANCED: 显示所有数据，包括额外NBT数据；.BASIC: 只显示物品名称
             );
-            if (tooltip.isEmpty()) {
+            if (tooltip.isEmpty()) {// 如果tooltip为空，则尝试只添加物品名称
                 tooltip.add(hoveredStack.getName());
-                if (tooltip.isEmpty()) {
+                if (tooltip.isEmpty()) {// 如果tooltip任然为空，则添加一个未知物品提示
                     tooltip.add(Text.translatable("sol2f.gui.food_book.unknown_item_text"));
                 }
             } else {
@@ -140,10 +141,14 @@ public class FoodBookScreen extends Screen {
     }
     }
 
-// ---辅助方法：判断鼠标是否在指定格子内---
-
+    // 处理鼠标点击事件
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {// 处理鼠标点击事件
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+
+        // 绘制基准点，后续监听计算
+        int guiLeft = (this.width - MAIN_PANEL_WIDTH) / 2; 
+        int guiTop = (this.height - GUI_HEIGHT) / 2;
+
         int targetLeft = guiLeft + 248;// 计算监听范围
         int targetTop = guiTop + 44;
         int targetRight = guiLeft + 271;
@@ -151,11 +156,12 @@ public class FoodBookScreen extends Screen {
 
         if (mouseX >= targetLeft && mouseX < targetRight && mouseY >= targetTop && mouseY < targetBottom) {// 判断鼠标是否在指定区域内
             if (button == 0) {// 0 = 左键; 1 = 右键; 2 = 中键
-                return true;
-            }        
+                MinecraftClient.getInstance().setScreen(new FoodOverviewScreen());
+                return true;// 返回 true 表示事件已处理，阻止其他 GUI 元素接收此点击
+            }
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(mouseX, mouseY, button);// 否则继续传递给父类处理
     }
 
     private boolean isMouseOver(int slotX, int slotY , int mouseX , int mouseY) {// 辅助方法：判断鼠标是否在指定格子内}

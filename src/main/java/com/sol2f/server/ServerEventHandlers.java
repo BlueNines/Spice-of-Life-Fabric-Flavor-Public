@@ -5,6 +5,9 @@ import java.util.Set;
 import com.sol2f.SpiceOfLifeFabricFlavor;
 import net.minecraft.server.network.ServerPlayerEntity;
 import com.sol2f.config.Sol2FConfig;
+import com.sol2f.network.FoodPackets;
+import com.sol2f.network.S2CFoodListSync;
+
 import me.shedaniel.autoconfig.AutoConfig;
 import com.sol2f.util.IEntityDataSaver;
 
@@ -21,12 +24,24 @@ public class ServerEventHandlers {
             Set<String> eaten = FoodUseHandler.getEatenFoods(player);// 返回空集而不是null，避免空指针异常
             FoodUseHandler.applyHealthModifier(player, eaten);// 应用生命值修饰符，eaten不会为null，上面的方法保证了这一点
             FoodUseHandler.syncToClient(player, eaten);// 同步已消耗列表到客户端
+
+            S2CFoodListSync.sendAllFoods(player, FoodUseHandler.ALLFoods);// 发送所有食物的列表
+            S2CFoodListSync.sendHealthMax(player, AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.maxHealthy);
+        });
+
+        ServerPlayNetworking.registerGlobalReceiver(FoodPackets.C2S_REQUEST_ALL_FOOD_LIST, (server, player, handler, buf, responder) -> {
+            S2CFoodListSync.sendAllFoods(player, FoodUseHandler.ALLFoods);
         });
 
         // 复制逻辑
+        // ServerPlayerEvents.COPY_FROM 在两种场景会被调用：
+        // 1) 玩家死亡并重生 (alive == false)
+        // 2) 玩家在同一会话中切换维度/传送 (alive == true)
+        // 需要在维度切换时也复制持久化数据（例如末地返回），否则会出现数据不同步的问题。
         ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
-            if(!alive && !AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.resetOnDeath) {
-                if (oldPlayer instanceof IEntityDataSaver olDataSaver && newPlayer instanceof IEntityDataSaver newDataSaver) {// 确保旧玩家和新玩家都实现了我们的IEntityDataSaver接口
+            boolean shouldCopy = alive || (!alive && !AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.resetOnDeath);
+            if (shouldCopy) {
+                if (oldPlayer instanceof IEntityDataSaver olDataSaver && newPlayer instanceof IEntityDataSaver newDataSaver) {
                     // 复制持久化数据
                     newDataSaver.getPersistentData().copyFrom(olDataSaver.getPersistentData());
                 }
