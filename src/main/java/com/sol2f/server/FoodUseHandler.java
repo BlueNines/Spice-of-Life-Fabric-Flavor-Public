@@ -12,9 +12,6 @@ import net.minecraft.registry.Registries;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
-import net.minecraft.util.Identifier;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registry;
 
 import java.util.HashSet;
 import java.util.Set;
