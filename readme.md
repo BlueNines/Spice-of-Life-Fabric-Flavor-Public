@@ -89,16 +89,16 @@ resetOnDeath: false,
 
 ## Q＆A
 
-**Q** 是否允许将此mod添加到整合包？<br>
+**Q** 是否允许将此mod添加到整合包？
 **A** 是的！该mod为平衡整合包设计，但是请不要使用整合包盈利或修改mod信息。
 
-**Q** 是否允许将此mod上传至别的平台？<br>
+**Q** 是否允许将此mod上传至别的平台？
 **A** 这是被允许的。但是不允许付费下载、限制下载（包括下载前看广告、下载需要积分类代币），请标注modrinth页面链接且不要修改mod信息。
 
 ## 依赖项
 
-- <a herf="https://modrinth.com/mod/modmenu"> Mod Menu </a> (v2.2.0+ 可选)配置页面入口
-- <a herf="https://modrinth.com/project/9s6osm5g"> Cloth Config API </a> (v2.2.0+ 必装)
+- [Mod Menu](https://modrinth.com/mod/modmenu) (v2.2.0+ 可选) 配置页面入口
+- [Cloth Config API](https://modrinth.com/project/9s6osm5g) (v2.2.0+ 必装)
 
 ## 提示
 
