@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "sol2f",
-	"version": "2.4.1",
+	"version": "2.4.2",
 	"name": "Spice of Life:Fabric Flavor",
 	"description": "一个fabric版本的食物奖励mod，基于Spice of Life重植。",
 	"authors": [
