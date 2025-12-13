@@ -11,6 +11,7 @@ base {
 }
 
 repositories {
+	maven { url "https://maven.aliyun.com/repository/public" }     // 阿里云公共仓库（通用库）
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
