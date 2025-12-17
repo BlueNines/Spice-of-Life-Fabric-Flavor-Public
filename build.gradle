@@ -11,14 +11,16 @@ base {
 }
 
 repositories {
-	maven { url "https://maven.aliyun.com/repository/public" }     // 阿里云公共仓库（通用库）
+    mavenCentral()
+
+	maven { url "https://maven.aliyun.com/repository/public"}     // 阿里云公共仓库（通用库）
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
     maven { url "https://maven.shedaniel.me/" }      // Cloth Config
-    maven { url "https://maven.terraformersmc.com/releases/" }  // ModMenu
+    maven { url "https://maven.terraformersmc.com/releases/"}  // ModMenu
 }
 
 loom {
@@ -30,7 +32,6 @@ loom {
 			sourceSet sourceSets.client
 		}
 	}
-
 }
 
 dependencies {
@@ -49,7 +50,12 @@ dependencies {
     modApi "me.shedaniel.cloth:cloth-config-fabric:11.1.136"
 
 	modApi "io.github.llamalad7:mixinextras-fabric:0.4.1"
+
+	implementation "net.objecthunter:exp4j:0.4.8"
+	include "net.objecthunter:exp4j:0.4.8"
+
 }
+
 
 processResources {
 	inputs.property "version", project.version

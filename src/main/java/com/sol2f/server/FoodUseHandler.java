@@ -2,6 +2,7 @@ package com.sol2f.server;
 
 import com.sol2f.config.Sol2FConfig;
 import com.sol2f.network.S2CFoodListSync;
+import com.sol2f.util.FunctionCaculator;
 
 import me.shedaniel.autoconfig.AutoConfig;
 import com.sol2f.SpiceOfLifeFabricFlavor;
@@ -17,6 +18,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.Map;
+
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
@@ -69,35 +73,26 @@ public class FoodUseHandler {
                 if (!authoritative.contains(id)) {
                     SpiceOfLifeFabricFlavor.LOGGER.warn("sol2f: after save, authoritative eaten set does not contain {} for player {}", id, serverPlayer.getName().getString());
                 } else {
-                    // 使用权威更新集应用生命值修饰符，直接应用新上限而不是加值
+                    // 使用权威更新集应用生命值修饰符
                     double prevMax = serverPlayer.getMaxHealth();
                     applyHealthModifier(serverPlayer, authoritative);
                     double newMax = serverPlayer.getMaxHealth();
                     syncToClient(serverPlayer, authoritative);
 
                     // 基于NBT状态在消息栏发送一次消息
-                    serverPlayer.sendMessage(Text.translatable("sol2f.msg.first_eaten", Text.literal(id)), false);
+                    Text displayName = stack.getName();
+                    serverPlayer.sendMessage(Text.translatable("sol2f.msg.first_eaten", displayName), false);
                     SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: Player {} first ate {}", serverPlayer.getName().getString(), id);
-
-                    // 写日志：记录变更后详情
-                    try {
-                        if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
-                            SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: after eat player={} food={} prevMax={} newMax={} eaten={}", serverPlayer.getName().getString(), id, prevMax, newMax, authoritative);
-                            java.util.Map<String, String> fields = new java.util.LinkedHashMap<>();
-                            fields.put("event", "after_eat");
-                            fields.put("player", serverPlayer.getName().getString());
-                            fields.put("food", id);
-                            fields.put("prevMax", Double.toString(prevMax));
-                            fields.put("newMax", Double.toString(newMax));
-                            fields.put("eaten", authoritative.toString());
-                            fields.put("unique", Integer.toString(authoritative.size()));
-                            fields.put("perHp", Double.toString(AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthyGain));
-                            fields.put("bonus", Double.toString(Math.min(AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.defaultHealthy + authoritative.size() * AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthyGain, AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.maxHealthy) - AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.defaultHealthy));
-                            fields.put("modifier_uuid", HEALTH_MODIFIER_ID.toString());
-                            SpiceOfLifeFabricFlavor.writeStructuredDevLog(fields);
-                        }
-                    } catch (Throwable t) {
-                        // 忽略日志记录失败
+                    if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
+                        SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: eat success player={} food={} eaten={} prevMax={} newMax={}", serverPlayer.getName().getString(), id, authoritative, prevMax, newMax);
+                        java.util.Map<String, String> _s = new java.util.LinkedHashMap<>();
+                        _s.put("event", "eat_success");
+                        _s.put("player", serverPlayer.getName().getString());
+                        _s.put("food", id);
+                        _s.put("eaten", authoritative.toString());
+                        _s.put("prevMaxHealth", Double.toString(prevMax));
+                        _s.put("newMaxHealth", Double.toString(newMax));
+                        SpiceOfLifeFabricFlavor.writeStructuredDevLog(_s);
                     }
                 }
             }
@@ -212,7 +207,7 @@ public class FoodUseHandler {
         applyHealthModifier(player, getEatenFoods(player));
     }
 
-    public static void applyHealthModifier(ServerPlayerEntity player, Set<String> eatenFoods) {// 计算并应用生命值修饰符的通用方法
+    public static void applyHealthModifier(ServerPlayerEntity player, Set<String> eatenFoods) {// 和生命值有关的操作
         if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
             player.sendMessage(Text.literal("run apply"), false);
         }
@@ -223,52 +218,57 @@ public class FoodUseHandler {
                 return;
             }
 
-            double defaultBase = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.defaultHealthy;
-            attr.setBaseValue(defaultBase);// 重置为默认基础生命值
-            SpiceOfLifeFabricFlavor.LOGGER.info("Set base health to {} for player {}", defaultBase, player.getName().getString());
-
-            attr.removeModifier(HEALTH_MODIFIER_ID);// 移除已有的生命值修饰符（如果存在）
+            // ---计算及判断生命值部分---
+            attr.removeModifier(HEALTH_MODIFIER_ID);// 1\ 移除已有的生命值修饰符
             SpiceOfLifeFabricFlavor.LOGGER.info("Removed existing health modifier for player {}", player.getName().getString());
 
-            // 这里计算默认增益
+            double CurrentHealth = attr.getValue();// 2\ 获取当前最大生命值（不含修饰符，包含别的mod的修改）
+
+            // 3\ 计算生命值增益
+            // 3.1\ 这里计算默认增益
             int unique = eatenFoods.size();// 将healthyGain解释为每个独特食物（新食用）项目增加的生命值（以生命值单位）
             double perHp = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthyGain;
-            double baseBonus = unique * perHp; // 来自独特食物的总生命值奖励
+            double BaseBonus = unique * perHp; // 来自独特食物的总生命值奖励
 
-            // 这里计算频率增益
-            int frequencyCount;// 达到的频率奖励次数
+            // 3.2\ 这里计算频率增益
+            int FrequencyCount;// 达到的频率奖励次数
             if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.Increasefrequency > 0) {// 当频率增益频率大于0时（功能启用时）执行，不判断将除以0导致报错
-                frequencyCount = unique / AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.Increasefrequency;
+                FrequencyCount = unique / AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.Increasefrequency;
             } else {
-                frequencyCount = 0;
+                FrequencyCount = 0;
             }
-            double frequencyBonus = frequencyCount * AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.frequencyGain; // 来自频率奖励的总生命值奖励
+            double FrequencyBonus = FrequencyCount * AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.frequencyGain; // 来自频率奖励的总生命值奖励
 
-            // 这里计算总增益
-            double healthBonus = baseBonus + frequencyBonus;// 计算总生命值奖励
+            // 3.3\ 计算函数
+            String formula = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.Expression;
+            double result = FunctionCaculator.evaluate(formula, Map.of(
+                "uniqueFoods", (double) unique,
+                "currentHealth", CurrentHealth
+            ));
 
-            // 这里判断总增益是否超过最大生命值
-            double maxHealthy = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.maxHealthy;
-            double newMaxHealth = Math.min(defaultBase + healthBonus, maxHealthy);
+            double HealthBonus = BaseBonus + FrequencyBonus + result;// 3.4\ 计算总生命值奖励
+
+            // 4\ 这里判断总增益是否超过最大生命值
+            double HealthyMaximum = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.maxHealthy;
+            double newMaxHealth = Math.min(CurrentHealth + HealthBonus, HealthyMaximum);
 
             // 这里应用生命修饰符
-            EntityAttributeModifier mod = new EntityAttributeModifier(HEALTH_MODIFIER_ID, "sol2f Health Bonus", newMaxHealth - defaultBase, EntityAttributeModifier.Operation.ADDITION);
+            EntityAttributeModifier mod = new EntityAttributeModifier(HEALTH_MODIFIER_ID, "sol2f Health Bonus", HealthBonus, EntityAttributeModifier.Operation.ADDITION);
             attr.addPersistentModifier(mod);
-            SpiceOfLifeFabricFlavor.LOGGER.info("Added health modifier: {} for player {} (unique={}, perHp={}, bonus={})", mod, player.getName().getString(), unique, perHp, healthBonus);
+            SpiceOfLifeFabricFlavor.LOGGER.info("Added health modifier: {} for player {} (unique={}, perHp={}, bonus={})", mod, player.getName().getString(), unique, perHp, HealthBonus);
             if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {// 输出日志
-                player.sendMessage(Text.literal("apply: " + healthBonus + ", " + frequencyBonus + ", " + baseBonus + ", " + frequencyCount + ", " + unique), false);// 总生值奖励、频率奖励、基础奖励、频率计数、独特食物计数
+                player.sendMessage(Text.literal("apply: " + HealthBonus + ", " + FrequencyBonus + ", " + BaseBonus + ", " + FrequencyCount + ", " + unique), false);// 总生值奖励、频率奖励、基础奖励、频率计数、独特食物计数
             }
 
             S2CFoodListSync.sendHealth(player, (int) newMaxHealth);// 发送生命值数据（仅用于GUI显示）
 
-
             // 这里是恢复生命逻辑
-            if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healToMaxOnIncrease) { // 恢复最大生命
+            if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthToMaxOnIncrease) { // 恢复最大生命
                 player.setHealth(player.getMaxHealth());
                 SpiceOfLifeFabricFlavor.LOGGER.info("Player {} healed to max health: {}", player.getName().getString(), player.getMaxHealth());
-            } else if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthIncrease > 0) { // 恢复指定生命 
+            } else if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthIncreaseOnIncrease > 0) { // 恢复指定生命 
                 float currentHealth = player.getHealth();
-                float increase = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthIncrease;
+                float increase = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthIncreaseOnIncrease;
                 float newHealth = Math.min(currentHealth + increase, (float)player.getMaxHealth());
                 player.setHealth(newHealth);
                 SpiceOfLifeFabricFlavor.LOGGER.info("Player {} healed to max health: {}", player.getName().getString(), player.getMaxHealth());

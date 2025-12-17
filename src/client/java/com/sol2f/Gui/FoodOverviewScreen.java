@@ -16,7 +16,7 @@ public class FoodOverviewScreen extends Screen {
         super(Text.translatable("screen.gui.food_overview.title"));
     }
 
-    // 通用基础量定义again
+    // 通用基础量定义
     private static final int GUI_WIDTH = 276;// GUI宽度（实际纹理包含主卡片和侧边选择栏）
     private static final int GUI_HEIGHT = 166;// GUI高度
     private static final int MAIN_PANEL_WIDTH = 248;// 主面板宽度，不包含侧边选择栏

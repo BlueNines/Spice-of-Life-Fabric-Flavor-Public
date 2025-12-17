@@ -39,7 +39,6 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 		// 通过反射启用开发者文件日志记录，以避免对Logback的编译时依赖
 			try {
 				if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
-				// 使用Fabric游戏目录以避免在当前工作目录不同时创建run/run
 				Path gameDir = net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir();
 				Path logsDir = gameDir.resolve("logs").resolve("sol2f");
 				if (!Files.exists(logsDir)) Files.createDirectories(logsDir);

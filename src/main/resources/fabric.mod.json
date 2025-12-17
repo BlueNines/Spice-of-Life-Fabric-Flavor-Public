@@ -1,15 +1,14 @@
 {
 	"schemaVersion": 1,
 	"id": "sol2f",
-	"version": "2.4.2",
+	"version": "2.5.0",
 	"name": "Spice of Life:Fabric Flavor",
 	"description": "一个fabric版本的食物奖励mod，基于Spice of Life重植。",
 	"authors": [
 		"xianfish"
 	],
 	"contact": {
-		"homepage": "",
-		"sources": ""
+		"homepage": "https://modrinth.com/project/mkvFT6R6"
 	},
 	"license": "ARR",
 	"icon": "assets/sol2f/icon.png",
@@ -21,7 +20,7 @@
 		"client": [
 			"com.sol2f.SpiceOfLifeFabricFlavorClient"
 		],
-		"modmenu": ["com.sol2f.config.Sol2FModMenu"]
+		"modmenu": ["com.sol2f.Gui.ModMenuLink"]
 	},
 	"mixins": [
 		"sol2f.mixins.json",
