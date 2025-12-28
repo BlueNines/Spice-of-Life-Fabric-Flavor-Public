@@ -1,0 +1,11 @@
+{
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [
+        {"item": "minecraft:carrot"},
+        {"item": "minecraft:book"}
+    ],
+    "result": {
+        "item": "sol2f:food_book",
+        "count": 1
+    }
+}
