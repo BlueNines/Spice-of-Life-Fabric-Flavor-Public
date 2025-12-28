@@ -43,5 +43,7 @@
   "sol2f.gui.food_overview.title": "概览",
   "sol2f.gui.food_book.unknown_item_text": "[错误]tooltip加载错误，请检查该物品的mod是否已卸载",
   "sol2f.gui.food_overview.text_FoodCount": "食物概述",
-  "sol2f.gui.food_overview.text_HealthyCount": "血量概述"
+  "sol2f.gui.food_overview.text_HealthyCount": "血量概述",
+
+  "item.sol2f.food_book": "食物簿"
 }

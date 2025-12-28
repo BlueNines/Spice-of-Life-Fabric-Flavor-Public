@@ -1,6 +1,14 @@
 package com.sol2f;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
+import net.minecraft.registry.Registry;
+import net.minecraft.item.ItemGroups;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.nio.file.Files;
@@ -11,11 +19,15 @@ import java.io.FileOutputStream;
 import java.time.format.DateTimeFormatter;
 
 import com.sol2f.config.Sol2FConfig;
-import me.shedaniel.autoconfig.AutoConfig;
-import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
+import com.sol2f.item.RightClickItem;
+import com.sol2f.network.FoodPackets;
 import com.sol2f.server.FoodUseHandler;
 import com.sol2f.server.ServerEventHandlers;
 import com.sol2f.command.FoodCommands;
+
+import me.shedaniel.autoconfig.AutoConfig;
+import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;;
 
 public class SpiceOfLifeFabricFlavor implements ModInitializer {
 	public static final String MOD_ID = "sol2f";
@@ -28,6 +40,14 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 	private static BufferedWriter DEV_FILE_WRITER = null;
 	private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	private static final DateTimeFormatter STARTUP_FILE_FMT = DateTimeFormatter.ofPattern("yyyy-M-d-HH-mm-ss");
+
+	public static final Item FOOD_BOOK_ITEM = new RightClickItem(// 创建食物书物品
+        new Item.Settings().maxCount(1),
+        (player, stack) -> {
+            // 发送打开食物书界面的数据包给客户端
+            ServerPlayNetworking.send(player, FoodPackets.OPEN_FOOD_BOOK_SCREEN, PacketByteBufs.empty());
+        }
+    );
 
 	@Override
 	public void onInitialize() {
@@ -96,8 +116,11 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 		FoodUseHandler.register();
 		ServerEventHandlers.register();
 		FoodCommands.register();
-		// 注册食物记录物品
-	// 已移除食物记录物品
+
+		Registry.register(Registries.ITEM, new Identifier("sol2f", "food_book"), FOOD_BOOK_ITEM);// 注册食物书物品
+		ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(entries -> {
+			entries.add(FOOD_BOOK_ITEM);
+		});
 
 		LOGGER.info("SpiceOfLife: initialized");
 	}

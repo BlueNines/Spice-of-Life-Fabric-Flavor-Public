@@ -14,4 +14,6 @@ public class FoodPackets {
     public static final Identifier S2C_HEALTH = new Identifier("sol2f", "s2c_health");// 服务器 -> 客户端，发送当前生命值
 
     public static final Identifier S2C_HEALTH_MAX = new Identifier("sol2f", "s2c_health_max");// 服务器 -> 客户端，发送最大生命值
+
+    public static final Identifier OPEN_FOOD_BOOK_SCREEN = new Identifier("sol2f", "open_food_book_screen");// 服务器 -> 客户端，打开食物书界面
 }

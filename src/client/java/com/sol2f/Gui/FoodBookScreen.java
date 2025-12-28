@@ -32,6 +32,11 @@ public class FoodBookScreen extends Screen {
 
 
     @Override
+    public boolean shouldPause() {
+        return false; // 不暂停游戏
+    }
+
+    @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {// 页面循环绘制逻辑
 
         // 绘制基准点，后续绘制计算

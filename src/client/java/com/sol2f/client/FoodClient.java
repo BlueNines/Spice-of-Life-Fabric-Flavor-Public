@@ -57,6 +57,10 @@ public class FoodClient implements ClientModInitializer {
             MaxHealth = buf.readInt();
         });
 
+        ClientPlayNetworking.registerGlobalReceiver(FoodPackets.OPEN_FOOD_BOOK_SCREEN, (client, handler, buf, responseSender) -> {// 打开食物书界面
+            client.execute(() -> client.setScreen(new FoodBookScreen()));
+        });
+
         // 2. Tooltip：标记未食用食物
         ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
             if (stack.getItem().getFoodComponent() == null) return;

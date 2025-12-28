@@ -2,9 +2,6 @@ package com.sol2f.Gui;
 
 import com.sol2f.config.Sol2FConfig;
 
-import com.terraformersmc.modmenu.api.ConfigScreenFactory;
-import com.terraformersmc.modmenu.api.ModMenuApi;
-import com.sol2f.config.Sol2FConfig;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;

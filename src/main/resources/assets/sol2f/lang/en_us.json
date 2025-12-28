@@ -45,5 +45,7 @@
   "sol2f.gui.food_overview.title": "Overview",
   "sol2f.gui.food_book.unknown_item_text": "[Error] Tooltip failed to load. Check if the item's mod is unloaded.",
   "sol2f.gui.food_overview.text_FoodCount": "Food Summary",
-  "sol2f.gui.food_overview.text_HealthyCount": "Health Summary"
+  "sol2f.gui.food_overview.text_HealthyCount": "Health Summary",
+
+  "item.sol2f.food_book": "Food Book"
 }

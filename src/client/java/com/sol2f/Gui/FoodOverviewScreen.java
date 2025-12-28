@@ -22,6 +22,11 @@ public class FoodOverviewScreen extends Screen {
     private static final int MAIN_PANEL_WIDTH = 248;// 主面板宽度，不包含侧边选择栏
     private final Identifier GUI_TEXTURE = new Identifier("sol2f", "textures/gui/food_book.png");
 
+    @Override
+    public boolean shouldPause() {
+        return false; // 不暂停游戏
+    }
+
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context);// 绘制半透明黑色背景
 
