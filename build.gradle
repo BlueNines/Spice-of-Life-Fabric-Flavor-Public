@@ -20,7 +20,7 @@ repositories {
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
     maven { url "https://maven.shedaniel.me/" }      // Cloth Config
-    maven { url "https://maven.terraformersmc.com/releases/"}  // ModMenu
+    maven { url "https://maven.terraformersmc.com/"}  // ModMenu
 }
 
 loom {
@@ -44,13 +44,14 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     // Mod Menu
-    modApi "com.terraformersmc:modmenu:7.2.2"
+	modApi "com.terraformersmc:modmenu:11.0.1"
 
-    // Cloth Config (standalone, no REI)
-    modApi "me.shedaniel.cloth:cloth-config-fabric:11.1.136"
+    // Cloth Config
+    modApi "me.shedaniel.cloth:cloth-config-fabric:15.0.140"
 
 	modApi "io.github.llamalad7:mixinextras-fabric:0.4.1"
 
+	// exp4j
 	implementation "net.objecthunter:exp4j:0.4.8"
 	include "net.objecthunter:exp4j:0.4.8"
 
@@ -66,7 +67,7 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    it.options.release = 17
+    it.options.release = 21
 }
 
 java {
@@ -75,8 +76,8 @@ java {
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {

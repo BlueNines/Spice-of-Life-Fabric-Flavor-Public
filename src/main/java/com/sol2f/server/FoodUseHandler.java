@@ -1,28 +1,31 @@
 package com.sol2f.server;
 
 import com.sol2f.config.Sol2FConfig;
-import com.sol2f.network.S2CFoodListSync;
+import com.sol2f.network.payload.*;
 import com.sol2f.util.FunctionCaculator;
-
-import me.shedaniel.autoconfig.AutoConfig;
 import com.sol2f.SpiceOfLifeFabricFlavor;
+
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.text.Text;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.registry.Registries;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.util.Identifier;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.UUID;
 import java.util.Map;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
+import java.util.ArrayList;
 
 public class FoodUseHandler {
 
@@ -31,8 +34,20 @@ public class FoodUseHandler {
     // 注册占位符（服务器事件处理程序位于ServerEventHandlers中）
     }
 
+    public static boolean isFoodItem(ItemStack stack) {// 二次判断物品是否为食物
+        return stack != null && stack.contains(DataComponentTypes.FOOD);
+    }
+
+    public static boolean isFoodItemType(Item item) {// 获取ALLFoods时使用
+        return item != null && item.getComponents().contains(DataComponentTypes.FOOD);
+    }
+
     public static void onFoodEaten(ServerPlayerEntity serverPlayer, ItemStack stack) {
-        if (stack == null || stack.getItem().getFoodComponent() == null) return;
+        if (!isFoodItem(stack)) return;
+        if (serverPlayer == null) {
+            SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: onFoodEaten called with null player");
+            return;
+        }
 
     String id = Registries.ITEM.getId(stack.getItem()).toString();
 
@@ -107,7 +122,7 @@ public class FoodUseHandler {
         }
     }
 
-    private static final UUID HEALTH_MODIFIER_ID = UUID.fromString("d78153c1-68a3-48c0-88d7-74c495008c47");// 就当是随机的吧，反正也是生成的，每次删除上一次的修饰符也不会重复
+    private static final Identifier HEALTH_MODIFIER_ID = Identifier.of("sol2f", "health_bonus");
     private static final String CONSUMED_KEY = "consumed_foods";
     private static final String DATA_VERSION = "data_version";
     private static final int CURRENT_VERSION = 1;
@@ -133,8 +148,8 @@ public class FoodUseHandler {
     }
 
     // 这里获取所有食物集合
-    public static final Set<String> ALLFoods = Registries.ITEM.stream()// 获取所有食物
-        .filter(item -> item.getFoodComponent() != null)
+    public static final Set<String> ALLFoods = Registries.ITEM.stream()
+        .filter(item -> isFoodItemType(item))
         .map(item -> Registries.ITEM.getId(item).toString())
         .collect(Collectors.toSet());
 
@@ -187,7 +202,7 @@ public class FoodUseHandler {
 
     public static void syncToClient(ServerPlayerEntity player, Set<String> eatenFoods) {
         try {
-            com.sol2f.network.S2CFoodListSync.sendTo(player, new java.util.ArrayList<>(eatenFoods));
+            ServerPlayNetworking.send(player, new S2CFoodListPayload(new ArrayList<>(eatenFoods)));
             SpiceOfLifeFabricFlavor.LOGGER.info("Synced food list to client: {}", eatenFoods);
         } catch (Exception e) {
             SpiceOfLifeFabricFlavor.LOGGER.error("Failed to sync to client", e);
@@ -252,14 +267,14 @@ public class FoodUseHandler {
             double newMaxHealth = Math.min(CurrentHealth + HealthBonus, HealthyMaximum);
 
             // 这里应用生命修饰符
-            EntityAttributeModifier mod = new EntityAttributeModifier(HEALTH_MODIFIER_ID, "sol2f Health Bonus", HealthBonus, EntityAttributeModifier.Operation.ADDITION);
+            EntityAttributeModifier mod = new EntityAttributeModifier(HEALTH_MODIFIER_ID, HealthBonus, EntityAttributeModifier.Operation.ADD_VALUE);
             attr.addPersistentModifier(mod);
             SpiceOfLifeFabricFlavor.LOGGER.info("Added health modifier: {} for player {} (unique={}, perHp={}, bonus={})", mod, player.getName().getString(), unique, perHp, HealthBonus);
             if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {// 输出日志
                 player.sendMessage(Text.literal("apply: " + HealthBonus + ", " + FrequencyBonus + ", " + BaseBonus + ", " + FrequencyCount + ", " + unique), false);// 总生值奖励、频率奖励、基础奖励、频率计数、独特食物计数
             }
 
-            S2CFoodListSync.sendHealth(player, (int) newMaxHealth);// 发送生命值数据（仅用于GUI显示）
+            ServerPlayNetworking.send(player, new S2CHealthMaxPayload((int) newMaxHealth));// 发送生命值数据（仅用于GUI显示）
 
             // 这里是恢复生命逻辑
             if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthToMaxOnIncrease) { // 恢复最大生命

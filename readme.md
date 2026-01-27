@@ -127,16 +127,11 @@ resetOnDeath: false,
 - 你可以使用`e`和`pi`代表`e`和`π`
 
 
-## 命令项
-<details>
-<summary>cleanhealthy</summary>
+## 命令
 
-```
-/sol2f clearhealthy
-```
-重置当前玩家的生命值上限与所有食物摄入记录，需管理员权限。
-版本：2.0+
-</details>
+- ``/sol2f clearhealthy``重置当前玩家的生命值上限与所有食物摄入记录，需管理员权限。（版本：2.0+）
+- ``/sol2f getlist <player>``获取<player>的已食用列表。 （版本：2.7.0+）
+
 
 ## GUI
 - **食物簿GUI** 在2.4.0+（beta2+）可用
@@ -145,6 +140,9 @@ resetOnDeath: false,
 ![GUI_overview](https://cdn.modrinth.com/data/cached_images/c505c1e662cf59069f2e590b0e76631e83aaa22a.png  )
 - **按键绑定** 打开GUI的快捷键在minecraft的按键绑定中配置
 ![GUI_keybinding](https://cdn.modrinth.com/data/cached_images/4c0430cadb76f90f51a83419395ebc981ac96220.png  )
+
+通过合成"食物簿"打开食物簿:
+![food book](https://cdn.modrinth.com/data/cached_images/eb67b04a5cd10951c497e5d90ac9703d7a2415f7.png)
 
 ## Q＆A
 **Q** 是否允许将此mod添加到整合包？<br>
@@ -167,13 +165,13 @@ Language/语言:
 **Translation is completed by artificial intelligence, AI-generated content may be inaccurate. For accurate information, please refer to the original Chinese text.**
 
 ## Overview  
-A simple Fabric 1.20.1 mod that partially ports features from *Life Seasoning: Carrot Edition*.  
+A Fabric mod that partially ports features from *Life Seasoning: Carrot Edition*.  
 
 This mod aims to incentivize players to try new foods by rewarding them with increased maximum health, thereby strengthening engagement with the modpack’s food system and balancing gameplay difficulty.
 
 ## Configuration File  
 This guide is maintained for the latest version. Please use the newest version of the mod whenever possible.  
-All health-related values are expressed in **health units**, where **2 health = 1 heart (❤)**.
+All health-related values are expressed in **health**, where **2 health = 1 heart (❤)**.
 
 <details>
 <summary>maxHealthy</summary>
@@ -295,15 +293,10 @@ A string-type custom gain calculation function. Coexists with legacy settings. S
 - Constants: `e` and `pi` represent Euler’s number and π, respectively
 
 ## Commands
-<details>
-<summary>cleanhealthy</summary>
 
-```
-/sol2f clearhealthy
-```
-Resets the current player’s maximum health and all food consumption records. Requires operator permissions.  
-Version: 2.0+
-</details>
+- ``/sol2f clearhealthy``Resets the current player’s maximum health and all food consumption records. Requires operator permissions.  (Version: 2.0+)
+- ``/sol2f getlist <player>``get eaten list of <player>.  (Version: 2.7.0+)
+
 
 ## GUI
 - **Food Journal GUI** available from 2.4.0+ (beta2+)  

@@ -1,16 +1,15 @@
 package com.sol2f.server;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 import com.sol2f.SpiceOfLifeFabricFlavor;
-import net.minecraft.server.network.ServerPlayerEntity;
-import com.sol2f.config.Sol2FConfig;
-import com.sol2f.network.FoodPackets;
-import com.sol2f.network.S2CFoodListSync;
-
-import me.shedaniel.autoconfig.AutoConfig;
 import com.sol2f.util.IEntityDataSaver;
+import com.sol2f.config.Sol2FConfig;
+import com.sol2f.network.payload.*;
 
+import net.minecraft.server.network.ServerPlayerEntity;
+import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
@@ -25,12 +24,14 @@ public class ServerEventHandlers {
             FoodUseHandler.applyHealthModifier(player, eaten);// 应用生命值修饰符，eaten不会为null，上面的方法保证了这一点
             FoodUseHandler.syncToClient(player, eaten);// 同步已消耗列表到客户端
 
-            S2CFoodListSync.sendAllFoods(player, FoodUseHandler.ALLFoods);// 发送所有食物的列表
-            S2CFoodListSync.sendHealthMax(player, AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.maxHealthy);
+            ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(FoodUseHandler.ALLFoods)));// 发送所有食物的列表
+            ServerPlayNetworking.send(player, new S2CFoodListPayload(new ArrayList<>(eaten)));// 发送食物的列表
+            ServerPlayNetworking.send(player, new S2CHealthMaxPayload(AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.maxHealthy));
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(FoodPackets.C2S_REQUEST_ALL_FOOD_LIST, (server, player, handler, buf, responder) -> {
-            S2CFoodListSync.sendAllFoods(player, FoodUseHandler.ALLFoods);
+        ServerPlayNetworking.registerGlobalReceiver(C2SRequestAllFoodListPayload.PACKET_ID, (payload, context) -> {
+            ServerPlayerEntity player = context.player();
+            ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(FoodUseHandler.ALLFoods)));
         });
 
         // 复制逻辑
@@ -63,10 +64,10 @@ public class ServerEventHandlers {
             }
         });
 
-        // 响应客户端对已消耗列表的明确请求。客户端可能在加入后注册接收器；
-        // 这允许他们立即要求服务器重新发送列表。
-        ServerPlayNetworking.registerGlobalReceiver(com.sol2f.network.FoodPackets.C2S_REQUEST_LIST, (server, player, handler, buf, responder) -> {
+        // 响应客户端请求食物列表
+        ServerPlayNetworking.registerGlobalReceiver(C2SRequestFoodListPayload.PACKET_ID, (payload, context) -> {
             try {
+                ServerPlayerEntity player = context.player();
                 Set<String> eaten = FoodUseHandler.getEatenFoods(player);
                 FoodUseHandler.syncToClient(player, eaten);
             } catch (Exception e) {

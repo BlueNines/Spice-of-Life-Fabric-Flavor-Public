@@ -2,16 +2,14 @@ package com.sol2f.client;
 
 import com.sol2f.Gui.FoodBookScreen;
 import com.sol2f.Key.KeyBindings;
-import com.sol2f.network.FoodPackets;
-import com.sol2f.network.S2CFoodListSync;
+import com.sol2f.network.payload.*;
 
-import io.netty.buffer.Unpooled;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -28,42 +26,45 @@ public class FoodClient implements ClientModInitializer {
     private static final Set<String> allFoods = Collections.synchronizedSet(new HashSet<>());
     private static int CurrentHealth = 0;
     private static int MaxHealth = 240;
-    private static volatile boolean allFoodsReceived = false;// 是否已接收所有食物列表
+    private static volatile boolean allFoodsReceived = false;
+
     @Override
     public void onInitializeClient() {
-        // 1. 网络包：接收食物列表
-        ClientPlayNetworking.registerGlobalReceiver(FoodPackets.S2C_FOOD_LIST, (client, handler, buf, responseSender) -> {// 接收已食用食物列表
-            List<String> list = S2CFoodListSync.readList(buf);
+        // 注册网络包接收器
+        ClientPlayNetworking.registerGlobalReceiver(S2CFoodListPayload.PACKET_ID, (payload, context) -> {
+            List<String> list = payload.foods();
             synchronized (consumed) {
                 consumed.clear();
                 consumed.addAll(list);
             }
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(FoodPackets.S2C_ALL_FOOD_LIST, (client, handler, buf, responseSender) -> {// 获取所有食物
-            List<String> list = S2CFoodListSync.readList(buf);
+        ClientPlayNetworking.registerGlobalReceiver(S2CAllFoodListPayload.PACKET_ID, (payload, context) -> {
+            List<String> list = payload.allFoods();
             synchronized (allFoods) {
                 allFoods.clear();
                 allFoods.addAll(list);
             }
-            allFoodsReceived = true;// 标记所有食物列表已接收
+            allFoodsReceived = true;
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(FoodPackets.S2C_HEALTH, (client, handler, buf, responseSender) -> {// 获取当前生命值
-            CurrentHealth = buf.readInt();
+        ClientPlayNetworking.registerGlobalReceiver(S2CHealthPayload.PACKET_ID, (payload, context) -> {
+            CurrentHealth = payload.health();
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(FoodPackets.S2C_HEALTH_MAX, (client, handler, buf, responseSender) -> {// 获取最大生命值
-            MaxHealth = buf.readInt();
+        ClientPlayNetworking.registerGlobalReceiver(S2CHealthMaxPayload.PACKET_ID, (payload, context) -> {
+            MaxHealth = payload.maxHealth();
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(FoodPackets.OPEN_FOOD_BOOK_SCREEN, (client, handler, buf, responseSender) -> {// 打开食物书界面
-            client.execute(() -> client.setScreen(new FoodBookScreen()));
+        ClientPlayNetworking.registerGlobalReceiver(OpenFoodBookPayload.PACKET_ID, (payload, context) -> {
+            MinecraftClient.getInstance().execute(() ->
+                MinecraftClient.getInstance().setScreen(new FoodBookScreen())
+            );
         });
 
-        // 2. Tooltip：标记未食用食物
-        ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
-            if (stack.getItem().getFoodComponent() == null) return;
+        // Tooltip
+        ItemTooltipCallback.EVENT.register((stack, tooltipContext, tooltipType, lines) -> {
+            if (!stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) return;
             String id = Registries.ITEM.getId(stack.getItem()).toString();
             if (!consumed.contains(id)) {
                 lines.add(Text.translatable("sol2f.tooltip.unconsumed")
@@ -72,50 +73,50 @@ public class FoodClient implements ClientModInitializer {
             }
         });
 
-        // 3. 注册快捷键（必须在初始化时调用）
+        // 注册快捷键
         KeyBindings.register();
 
-        // 4. 监听按键事件（每帧末尾检查）
+        // 监听按键事件
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (KeyBindings.OPEN_FOOD_BOOK.wasPressed()) {
                 client.setScreen(new FoodBookScreen());
             }
         });
 
+        // 连接时请求全部食物列表
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-        if (!allFoodsReceived) {
-            ClientPlayNetworking.send(FoodPackets.C2S_REQUEST_ALL_FOOD_LIST, new PacketByteBuf(Unpooled.buffer()));
-        }
-    });
-
+            if (!allFoodsReceived) {
+                ClientPlayNetworking.send(new C2SRequestAllFoodListPayload());
+            }
+        });
     }
 
-    // 以下为公共访问方法
-
-    public static int getCurrentHealth() {// 获取当前生命值（给GUI用）
+    // 公共访问方法（不变）
+    public static int getCurrentHealth() {
         return CurrentHealth;
     }
-    public static int getMaxHealth() {// 获取最大生命值（给GUI用）
+
+    public static int getMaxHealth() {
         return MaxHealth;
     }
 
-    public static int getConsumedCount() {// 获取已食用食物数量（给GUI用）
+    public static int getConsumedCount() {
         synchronized (consumed) {
             return consumed.size();
         }
     }
 
-    public static int getAllCount() {// 获取所有食物数量（给GUI用）
+    public static int getAllCount() {
         synchronized (allFoods) {
             return allFoods.size();
         }
     }
 
-    public static boolean isConsumed(String id) {// 判断某食物是否已食用
+    public static boolean isConsumed(String id) {
         return consumed.contains(id);
     }
 
-    public static List<String> getConsumedSnapshot() {// 获取已食用食物列表缓存快照
+    public static List<String> getConsumedSnapshot() {
         synchronized (consumed) {
             return new ArrayList<>(consumed);
         }

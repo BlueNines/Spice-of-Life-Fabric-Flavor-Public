@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "sol2f",
-	"version": "2.7.0",
+	"version": "3.0.0",
 	"name": "Spice of Life:Fabric Flavor",
 	"description": "一个fabric版本的食物奖励mod，基于Spice of Life重植。",
 	"authors": [
@@ -31,9 +31,9 @@
 		}
 	],
 	"depends": {
-		"fabricloader": ">=0.17.2",
-		"minecraft": "~1.20.1",
-		"java": ">=17",
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
 		"fabric-api": "*"
 	},
 	"suggests": {
