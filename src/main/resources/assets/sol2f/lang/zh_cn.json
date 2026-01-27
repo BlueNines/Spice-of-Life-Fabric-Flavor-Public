@@ -1,9 +1,13 @@
 {
   "sol2f.tooltip.unconsumed": "尚未食用",
-  "commands.sol2f.clearhealthy.success": "[sol2f] 已重置",
-  "commands.generic.permission": "你没有权限运行此命令",
-  "commands.sol2f.clearhealthy.failed": "[sol2f] 操作失败",
+
   "sol2f.msg.first_eaten": "你发现了：%s",
+  "sol2f.commands.clearhealthy.success": "已清除该玩家所有已食用食物记录",
+  "sol2f.commands.clearhealthy.permission": "你没有权限运行此命令",
+  "sol2f.commands.clearhealthy.must_be_player": "必须由玩家执行此命令",
+  "sol2f.commands.clearhealthy.failed": "重置食物食用数据失败",
+  "sol2f.commands.getlist.must_choose_player": "从控制台执行时必须指定玩家名称",
+  "sol2f.commands.getlist.player_not_found": "玩家 %s 不存在（或不在线）",
 
   "sol2f.gui.config.title": "Spice of Life: Fabric Flavor 设置",
   "sol2f.gui.config.option.healthy": "血量设置",
@@ -38,7 +42,6 @@
   "sol2f.gui.config.option.features.Expression.@Tooltip[13]":  "- e:e pi:π",
   "category.sol2f.main": "生活调味料：胡罗贝版",
   "key.sol2f.open_food_book": "打开食物簿",
-
   "sol2f.gui.food_book.title": "食物簿",
   "sol2f.gui.food_overview.title": "概览",
   "sol2f.gui.food_book.unknown_item_text": "[错误]tooltip加载错误，请检查该物品的mod是否已卸载",

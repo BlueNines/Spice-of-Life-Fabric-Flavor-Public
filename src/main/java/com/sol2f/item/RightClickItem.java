@@ -10,7 +10,7 @@ import net.minecraft.world.World;
 
 import java.util.function.BiConsumer;
     
-public class RightClickItem extends Item {// 创建物品一个类that可以在右键点击时执行特定操作，便于添加各种xx功能书等物品
+public class RightClickItem extends Item {// 创建物品一个类that可以在右键点击时执行特定操作，以添加功能书
 
     private final BiConsumer<ServerPlayerEntity, ItemStack> onRightClick;
 
