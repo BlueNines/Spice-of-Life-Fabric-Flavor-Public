@@ -3,6 +3,9 @@ package com.sol2f.config;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 
+import java.util.List;
+import java.util.Arrays;
+
 @Config(name = "spice-of-life-fabric-flavor")
 public class Sol2FConfig implements ConfigData {
     public HealthySetting healthy = new HealthySetting();
@@ -21,5 +24,9 @@ public class Sol2FConfig implements ConfigData {
         public boolean healthToMaxOnIncrease = false;
         public int healthIncreaseOnIncrease = 0;
         public String Expression = "0";
+        public List<String> blacklist = Arrays.asList(
+            "minecraft:rotten_flesh",
+            "minecraft:spider_eye"
+        );
     }
 }

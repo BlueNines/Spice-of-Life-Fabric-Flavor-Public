@@ -1,5 +1,4 @@
-// com/sol2f/Key/KeyBindings.java
-package com.sol2f.Key;
+package com.sol2f.key;
 
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
@@ -7,7 +6,6 @@ import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
 public class KeyBindings {
-    // 必须是 public static
     public static KeyBinding OPEN_FOOD_BOOK;
 
     public static void register() {

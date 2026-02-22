@@ -1,6 +1,7 @@
-package com.sol2f.Gui;
+package com.sol2f.gui;
 
 import com.sol2f.config.Sol2FConfig;
+import com.sol2f.config.SOL2FClientConfig;
 
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
@@ -15,14 +16,18 @@ public class Sol2FConfigGUI {
         
         System.out.println("Sol2FConfigGUI: openConfigScreen called!");
 
-        Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
+        Sol2FConfig Config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
+        SOL2FClientConfig ClientConfig = AutoConfig.getConfigHolder(SOL2FClientConfig.class).getConfig();
 
         System.out.println("Config loaded");
 
         ConfigBuilder builder = ConfigBuilder.create()
             .setParentScreen(parent)
             .setTitle(Text.translatable("sol2f.gui.config.title"))
-            .setSavingRunnable(() -> AutoConfig.getConfigHolder(Sol2FConfig.class).save());// 保存当前 config 实例（AutoConfig 自动写入文件）
+            .setSavingRunnable(() -> {
+                AutoConfig.getConfigHolder(Sol2FConfig.class).save();
+                AutoConfig.getConfigHolder(SOL2FClientConfig.class).save();
+            });// 保存当前 config 实例（AutoConfig 自动写入文件）
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
@@ -34,14 +39,14 @@ public class Sol2FConfigGUI {
         healthyCat.addEntry(
             entryBuilder.startIntField(
                 Text.translatable("sol2f.gui.config.option.healthy.maxHealthy"),
-                config.healthy.maxHealthy
+                Config.healthy.maxHealthy
             )
             .setTooltip(
                 Text.translatable("sol2f.gui.config.option.healthy.maxHealthy.@Tooltip")
             )
             .setMin(2)
-            .setMax(240)
-            .setSaveConsumer(newValue -> config.healthy.maxHealthy = newValue)
+            .setMax(5000)
+            .setSaveConsumer(newValue -> Config.healthy.maxHealthy = newValue)
             .build()
         );
 
@@ -53,83 +58,83 @@ public class Sol2FConfigGUI {
         featureCat.addEntry(
             entryBuilder.startIntField(
                 Text.translatable("sol2f.gui.config.option.features.healthyGain"),
-                config.features.healthyGain
+                Config.features.healthyGain
             )
             .setTooltip(
                 Text.translatable("sol2f.gui.config.option.features.healthyGain.@Tooltip")
             )
             .setMin(0).setMax(20)
-            .setSaveConsumer(v -> config.features.healthyGain = v)
+            .setSaveConsumer(v -> Config.features.healthyGain = v)
             .build()
         );
 
         featureCat.addEntry(
             entryBuilder.startIntField(
                 Text.translatable("sol2f.gui.config.option.features.Increasefrequency"),
-                config.features.Increasefrequency
+                Config.features.Increasefrequency
             )
             .setTooltip(
                 Text.translatable("sol2f.gui.config.option.features.Increasefrequency.@Tooltip")
             )
             .setMin(0).setMax(20)
-            .setSaveConsumer(v -> config.features.Increasefrequency = v)
+            .setSaveConsumer(v -> Config.features.Increasefrequency = v)
             .build()
         );
 
         featureCat.addEntry(
             entryBuilder.startIntField(
                 Text.translatable("sol2f.gui.config.option.features.frequencyGain"),
-                config.features.frequencyGain
+                Config.features.frequencyGain
             )
             .setTooltip(
                 Text.translatable("sol2f.gui.config.option.features.frequencyGain.@Tooltip")
             )
-            .setMin(1).setMax(30)  // 注意：语言文件说 1~30，但原注解是 min=2，按语言文件为准
-            .setSaveConsumer(v -> config.features.frequencyGain = v)
+            .setMin(1).setMax(30)
+            .setSaveConsumer(v -> Config.features.frequencyGain = v)
             .build()
         );
 
         featureCat.addEntry(
             entryBuilder.startBooleanToggle(
                 Text.translatable("sol2f.gui.config.option.features.resetOnDeath"),
-                config.features.resetOnDeath
+                Config.features.resetOnDeath
             )
             .setTooltip(
                 Text.translatable("sol2f.gui.config.option.features.resetOnDeath.@Tooltip")
             )
-            .setSaveConsumer(v -> config.features.resetOnDeath = v)
+            .setSaveConsumer(v -> Config.features.resetOnDeath = v)
             .build()
         );
 
         featureCat.addEntry(
             entryBuilder.startBooleanToggle(
                 Text.translatable("sol2f.gui.config.option.features.healthToMaxOnIncrease"),
-                config.features.healthToMaxOnIncrease
+                Config.features.healthToMaxOnIncrease
             )
             .setTooltip(
                 Text.translatable("sol2f.gui.config.option.features.healthToMaxOnIncrease.@Tooltip")
             )
-            .setSaveConsumer(v -> config.features.healthToMaxOnIncrease = v)
+            .setSaveConsumer(v -> Config.features.healthToMaxOnIncrease = v)
             .build()
         );
 
         featureCat.addEntry(
             entryBuilder.startIntField(
                 Text.translatable("sol2f.gui.config.option.features.healthIncreaseOnIncrease"),
-                config.features.healthIncreaseOnIncrease
+                Config.features.healthIncreaseOnIncrease
             )
             .setTooltip(
                 Text.translatable("sol2f.gui.config.option.features.healthIncreaseOnIncrease.@Tooltip")
             )
             .setMin(0).setMax(20)
-            .setSaveConsumer(v -> config.features.healthIncreaseOnIncrease = v)
+            .setSaveConsumer(v -> Config.features.healthIncreaseOnIncrease = v)
             .build()
         );
 
         featureCat.addEntry(
             entryBuilder.startStrField(
                 Text.translatable("sol2f.gui.config.option.features.Expression"),
-                config.features.Expression
+                Config.features.Expression
             )
             .setTooltip(
                 Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[1]"),
@@ -143,10 +148,49 @@ public class Sol2FConfigGUI {
                 Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[9]"),
                 Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[10]"),
                 Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[11]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[12]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[13]")
+                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[12]")
             )
-            .setSaveConsumer(v -> config.features.Expression = v)
+            .setSaveConsumer(v -> Config.features.Expression = v)
+            .build()
+        );
+
+        featureCat.addEntry(
+            entryBuilder.startStrList(
+                Text.translatable("sol2f.gui.config.option.features.blacklist"),
+                Config.features.blacklist
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.features.blacklist.@Tooltip[1]"),
+                Text.translatable("sol2f.gui.config.option.features.blacklist.@Tooltip[2]"),
+                Text.translatable("sol2f.gui.config.option.features.blacklist.@Tooltip[3]")
+            )
+            .setSaveConsumer(v -> Config.features.blacklist = v)
+            .build()
+        );
+
+        ConfigCategory guiCat = builder.getOrCreateCategory(
+            Text.translatable("sol2f.gui.config.option.gui")
+        );
+        guiCat.addEntry(
+            entryBuilder.startBooleanToggle(
+                Text.translatable("sol2f.gui.config.option.gui.ShowUnconsumedTooltips"),
+                ClientConfig.GUISetting.ShowUnconsumedTooltips
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.gui.ShowUnconsumedTooltips.@Tooltip")
+            )
+            .setSaveConsumer(v -> ClientConfig.GUISetting.ShowUnconsumedTooltips = v)
+            .build()
+        );
+        guiCat.addEntry(
+            entryBuilder.startBooleanToggle(
+                Text.translatable("sol2f.gui.config.option.gui.ShowConsumedTooltips"),
+                ClientConfig.GUISetting.ShowConsumedTooltips
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.gui.ShowConsumedTooltips.@Tooltip")
+            )
+            .setSaveConsumer(v -> ClientConfig.GUISetting.ShowConsumedTooltips = v)
             .build()
         );
 

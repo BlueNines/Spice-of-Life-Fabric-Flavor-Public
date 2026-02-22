@@ -3,7 +3,12 @@ package com.sol2f.command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.sol2f.SpiceOfLifeFabricFlavor;
 import com.sol2f.server.FoodUseHandler;
+import com.sol2f.network.payload.S2CAllFoodListPayload;
+import com.sol2f.network.payload.S2CFoodListPayload;
+import com.sol2f.network.payload.S2CHealthPayload;
+import com.sol2f.network.payload.S2CHealthMaxPayload;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.command.CommandSource;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -11,6 +16,7 @@ import net.minecraft.text.Text;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Set;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -61,6 +67,11 @@ public class FoodCommands {
                         ))
                     )
                 )
+                .then(literal("sync")
+                    .executes(ctx -> executeSync(ctx.getSource(), "both"))
+                    .then(literal("AllFoodList").executes(ctx -> executeSync(ctx.getSource(), "allfoodlist")))
+                    .then(literal("PlayerData").executes(ctx -> executeSync(ctx.getSource(), "playerdata")))
+                )
             );
         });
     }
@@ -95,5 +106,56 @@ public class FoodCommands {
         source.sendFeedback(() -> Text.literal(foodList), false);
 
         return 1;
+    }
+    
+    private static int executeSync(ServerCommandSource source, String syncType) {
+        ServerPlayerEntity player = source.getPlayer();
+        if (player == null) {
+            source.sendError(Text.translatable("sol2f.commands.sync.must_be_player"));
+            return 0;
+        }
+        
+        try {
+            switch (syncType.toLowerCase()) {
+                case "allfoodlist":
+                    // 获取并同步所有非黑名单食物列表
+                    Set<String> allFoods = FoodUseHandler.getAllFoods();
+                    ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(allFoods)));
+                    
+                    // 重新计算并发送理论最大增益值
+                    int recalculatedMaxBonus = FoodUseHandler.calculateTheoreticalMaxHealthBonus();
+                    ServerPlayNetworking.send(player, new S2CHealthMaxPayload(recalculatedMaxBonus));
+                    
+                    source.sendFeedback(() -> Text.translatable("sol2f.commands.sync.allfoodlist.success"), false);
+                    break;
+                    
+                case "playerdata":
+                    // 同步玩家数据
+                    Set<String> eatenFoods = FoodUseHandler.getEatenFoods(player);
+                    ServerPlayNetworking.send(player, new S2CFoodListPayload(new ArrayList<>(eatenFoods)));
+
+                    source.sendFeedback(() -> Text.translatable("sol2f.commands.sync.playerdata.success"), false);
+                    break;
+                    
+                case "both":
+                default:
+                    // 同步所有数据
+                    ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(FoodUseHandler.getAllFoods())));
+                    Set<String> playerEaten = FoodUseHandler.getEatenFoods(player);
+                    ServerPlayNetworking.send(player, new S2CFoodListPayload(new ArrayList<>(playerEaten)));
+                    ServerPlayNetworking.send(player, new S2CHealthPayload((int) player.getMaxHealth()));
+                    int maxBonus = FoodUseHandler.calculateTheoreticalMaxHealthBonus();
+                    ServerPlayNetworking.send(player, new S2CHealthMaxPayload(maxBonus));
+                    
+                    source.sendFeedback(() -> Text.translatable("sol2f.commands.sync.both.success"), false);
+                    break;
+            }
+            
+            return 1;
+        } catch (Exception e) {
+            SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: failed to sync data", e);
+            source.sendError(Text.translatable("sol2f.commands.sync.failed"));
+            return 0;
+        }
     }
 }

@@ -6,7 +6,7 @@ import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
 
-
+// 增益血量
 public record S2CHealthPayload(int health) implements CustomPayload {
     public static final Identifier ID = Identifier.of("sol2f", "s2c_health");
     public static final CustomPayload.Id<S2CHealthPayload> PACKET_ID = new CustomPayload.Id<>(ID);

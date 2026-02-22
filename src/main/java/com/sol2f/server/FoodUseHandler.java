@@ -31,7 +31,7 @@ public class FoodUseHandler {
 
     // 为初始化器保留注册；使用mixin时不需要运行时注册
     public static void register() {
-    // 注册占位符（服务器事件处理程序位于ServerEventHandlers中）
+        // 注册占位符（服务器事件处理程序位于ServerEventHandlers中）
     }
 
     public static boolean isFoodItem(ItemStack stack) {// 二次判断物品是否为食物
@@ -43,13 +43,23 @@ public class FoodUseHandler {
     }
 
     public static void onFoodEaten(ServerPlayerEntity serverPlayer, ItemStack stack) {
-        if (!isFoodItem(stack)) return;
+        if (!isFoodItem(stack))
+            return;
+        
+        // 黑名单检查 - 如果物品在黑名单中，直接返回不处理
+        String itemId = Registries.ITEM.getId(stack.getItem()).toString();
+        if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.blacklist.contains(itemId)) {
+            if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
+                SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: Item {} is blacklisted, ignoring", itemId);
+            }
+            return;
+        }
         if (serverPlayer == null) {
             SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: onFoodEaten called with null player");
             return;
         }
 
-    String id = Registries.ITEM.getId(stack.getItem()).toString();
+        String id = Registries.ITEM.getId(stack.getItem()).toString();
 
         // 在玩家上使用同步块以避免竞争条件，其中两个事件
         // 都在写入之前读取NBT，因此都发送首次食用消息
@@ -57,20 +67,20 @@ public class FoodUseHandler {
             // developerMode的入口日志：记录尝试
             try {
                 if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
-                    SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: eat attempt player={} food={}", serverPlayer.getName().getString(), id);
+                    SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: eat attempt player={} food={}",
+                            serverPlayer.getName().getString(), id);
                     java.util.Map<String, String> _f = new java.util.LinkedHashMap<>();
                     _f.put("event", "eat_attempt");
                     _f.put("player", serverPlayer.getName().getString());
                     _f.put("food", id);
                     SpiceOfLifeFabricFlavor.writeStructuredDevLog(_f);
                 }
-            } catch (Throwable t) {
-                // 忽略日志记录失败
-            }
+            } catch (Throwable t) {}
             // 在锁内重新读取权威NBT
             Set<String> current = getEatenFoods(serverPlayer);
             if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
-                SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: before change player={} eaten={}", serverPlayer.getName().getString(), current);
+                SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: before change player={} eaten={}",
+                        serverPlayer.getName().getString(), current);
                 java.util.Map<String, String> _b = new java.util.LinkedHashMap<>();
                 _b.put("event", "before_change");
                 _b.put("player", serverPlayer.getName().getString());
@@ -85,7 +95,9 @@ public class FoodUseHandler {
                 // 重新读取权威持久化集合以确保写入成功
                 Set<String> authoritative = getEatenFoods(serverPlayer);
                 if (!authoritative.contains(id)) {
-                    SpiceOfLifeFabricFlavor.LOGGER.warn("sol2f: after save, authoritative eaten set does not contain {} for player {}", id, serverPlayer.getName().getString());
+                    SpiceOfLifeFabricFlavor.LOGGER.warn(
+                            "sol2f: after save, authoritative eaten set does not contain {} for player {}", id,
+                            serverPlayer.getName().getString());
                 } else {
                     // 使用权威更新集应用生命值修饰符
                     double prevMax = serverPlayer.getMaxHealth();
@@ -96,9 +108,12 @@ public class FoodUseHandler {
                     // 基于NBT状态在消息栏发送一次消息
                     Text displayName = stack.getName();
                     serverPlayer.sendMessage(Text.translatable("sol2f.msg.first_eaten", displayName), false);
-                    SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: Player {} first ate {}", serverPlayer.getName().getString(), id);
+                    SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: Player {} first ate {}",
+                            serverPlayer.getName().getString(), id);
                     if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
-                        SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: eat success player={} food={} eaten={} prevMax={} newMax={}", serverPlayer.getName().getString(), id, authoritative, prevMax, newMax);
+                        SpiceOfLifeFabricFlavor.LOGGER.info(
+                                "sol2f-log: eat success player={} food={} eaten={} prevMax={} newMax={}",
+                                serverPlayer.getName().getString(), id, authoritative, prevMax, newMax);
                         java.util.Map<String, String> _s = new java.util.LinkedHashMap<>();
                         _s.put("event", "eat_success");
                         _s.put("player", serverPlayer.getName().getString());
@@ -110,15 +125,16 @@ public class FoodUseHandler {
                     }
                 }
             }
-                if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
-                    SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: eat ignored (already eaten) player={} food={} eaten={}", serverPlayer.getName().getString(), id, current);
-                    java.util.Map<String, String> _i = new java.util.LinkedHashMap<>();
-                    _i.put("event", "eat_ignored");
-                    _i.put("player", serverPlayer.getName().getString());
-                    _i.put("food", id);
-                    _i.put("eaten", current.toString());
-                    SpiceOfLifeFabricFlavor.writeStructuredDevLog(_i);
-                }
+            if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {
+                SpiceOfLifeFabricFlavor.LOGGER.info("sol2f-log: eat ignored (already eaten) player={} food={} eaten={}",
+                        serverPlayer.getName().getString(), id, current);
+                java.util.Map<String, String> _i = new java.util.LinkedHashMap<>();
+                _i.put("event", "eat_ignored");
+                _i.put("player", serverPlayer.getName().getString());
+                _i.put("food", id);
+                _i.put("eaten", current.toString());
+                SpiceOfLifeFabricFlavor.writeStructuredDevLog(_i);
+            }
         }
     }
 
@@ -147,21 +163,81 @@ public class FoodUseHandler {
         SpiceOfLifeFabricFlavor.LOGGER.error("Failed to write persistent compound. Player is not IEntityDataSaver!");
     }
 
-    // 这里获取所有食物集合
-    public static final Set<String> ALLFoods = Registries.ITEM.stream()
-        .filter(item -> isFoodItemType(item))
-        .map(item -> Registries.ITEM.getId(item).toString())
-        .collect(Collectors.toSet());
+    // 获取所有非黑名单食物集合 
+
+    public static Set<String> getAllFoods() {
+        try {
+            Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
+            Set<String> foods = Registries.ITEM.stream()
+                    .filter(item -> isFoodItemType(item))
+                    .map(item -> Registries.ITEM.getId(item).toString())
+                    .filter(itemId -> !config.features.blacklist.contains(itemId))
+                    .collect(Collectors.toSet());
+            
+            if (config.features.developerMode) {
+                SpiceOfLifeFabricFlavor.LOGGER.info("Get ALLFoods: {} items, blacklist contains {} items", 
+                    foods.size(), config.features.blacklist.size());
+            }
+            
+            return foods;
+        } catch (Exception e) {
+            SpiceOfLifeFabricFlavor.LOGGER.error("Failed to get ALLFoods", e);
+            return new HashSet<>();
+        }
+    }
+    
+    // 计算本mod在当前配置下能提供的最大增益值
+    public static int calculateTheoreticalMaxHealthBonus() {
+        Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
+        try {
+            int totalFoods = getAllFoods().size();
+
+            double perHp = config.features.healthyGain;
+            double baseBonus = totalFoods * perHp;
+            
+            int frequencyCount = 0;
+            if (config.features.Increasefrequency > 0) {
+                frequencyCount = totalFoods / config.features.Increasefrequency;
+            }
+            double frequencyBonus = frequencyCount * config.features.frequencyGain;
+            
+            String formula = config.features.Expression;
+            double functionBonus = 0;
+            if (!"0".equals(formula)) {
+                functionBonus = FunctionCaculator.evaluate(formula, Map.of("uniqueFoods", (double) totalFoods));
+            }
+            
+            double totalBonus = baseBonus + frequencyBonus + functionBonus;
+
+            // 与配置的最大增益值比较
+            double maxBonusAllowed = config.healthy.maxHealthy;
+            double finalBonus = Math.min(totalBonus, maxBonusAllowed);
+            
+            if (config.features.developerMode) {
+                SpiceOfLifeFabricFlavor.LOGGER.info(
+                    "Theoretical max bonus calculation - foods:{}, baseBonus:{}, freqBonus:{}, funcBonus:{}, totalBonus:{}, maxAllowed:{}, final:{}",
+                    totalFoods, baseBonus, frequencyBonus, functionBonus, totalBonus, maxBonusAllowed, finalBonus
+                );
+            }
+            
+            return (int) finalBonus;
+        } catch (Exception e) {
+            SpiceOfLifeFabricFlavor.LOGGER.error("Failed to calculate theoretical max bonus", e);
+            return config.healthy.maxHealthy; // 返回配置中的最大增益值作为fallback
+        }
+    }
 
     public static Set<String> getEatenFoods(ServerPlayerEntity player) {
         try {
             NbtCompound persistent = readPersistentCompound(player);
-            NbtList consumed = persistent.contains(CONSUMED_KEY, 9) ? persistent.getList(CONSUMED_KEY, 8) : new NbtList();
+            NbtList consumed = persistent.contains(CONSUMED_KEY, 9) ? persistent.getList(CONSUMED_KEY, 8)
+                    : new NbtList();
             Set<String> set = new HashSet<>();
-            for (int i = 0; i < consumed.size(); i++) set.add(consumed.getString(i));
+            for (int i = 0; i < consumed.size(); i++)
+                set.add(consumed.getString(i));
             return set;
         } catch (Exception e) {
-                SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: failed to get eaten foods", e);
+            SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: failed to get eaten foods", e);
             return new HashSet<>();
         }
     }
@@ -169,7 +245,9 @@ public class FoodUseHandler {
     private static void saveEatenFoods(ServerPlayerEntity player, Set<String> eatenFoods) {
         try {
             NbtCompound persistent = readPersistentCompound(player);
-            SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: before save for player {} persistent contains: {}", player.getName().getString(), persistent.contains(CONSUMED_KEY, 9) ? persistent.getList(CONSUMED_KEY, 8) : "<none>");
+            SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: before save for player {} persistent contains: {}",
+                    player.getName().getString(),
+                    persistent.contains(CONSUMED_KEY, 9) ? persistent.getList(CONSUMED_KEY, 8) : "<none>");
             NbtList newList = new NbtList();
             for (String food : eatenFoods) {
                 newList.add(NbtString.of(food));
@@ -180,9 +258,13 @@ public class FoodUseHandler {
             // 读回并记录权威持久化内容
             try {
                 NbtCompound after = readPersistentCompound(player);
-                SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: after save for player {} persistent contains: {}", player.getName().getString(), after.contains(CONSUMED_KEY, 9) ? after.getList(CONSUMED_KEY, 8) : "<none>");
+                SpiceOfLifeFabricFlavor.LOGGER.info("sol2f: after save for player {} persistent contains: {}",
+                        player.getName().getString(),
+                        after.contains(CONSUMED_KEY, 9) ? after.getList(CONSUMED_KEY, 8) : "<none>");
             } catch (Throwable t) {
-                SpiceOfLifeFabricFlavor.LOGGER.warn("sol2f: failed to read back persistent compound after save for player {}", player.getName().getString());
+                SpiceOfLifeFabricFlavor.LOGGER.warn(
+                        "sol2f: failed to read back persistent compound after save for player {}",
+                        player.getName().getString());
             }
         } catch (Exception e) {
             SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: failed to save eaten foods", e);
@@ -227,16 +309,15 @@ public class FoodUseHandler {
         }
         try {
             EntityAttributeInstance attr = player.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH);
-            if (attr == null) {// 玩家不存在最大生命值属性，不应该发生，但是防止空指针异常，人人有责
+            if (attr == null) {
                 SpiceOfLifeFabricFlavor.LOGGER.error("Health attribute instance is null for player {}", player.getName().getString());
                 return;
             }
 
             // ---计算及判断生命值部分---
             attr.removeModifier(HEALTH_MODIFIER_ID);// 1\ 移除已有的生命值修饰符
-            SpiceOfLifeFabricFlavor.LOGGER.info("Removed existing health modifier for player {}", player.getName().getString());
-
-            double CurrentHealth = attr.getValue();// 2\ 获取当前最大生命值（不含修饰符，包含别的mod的修改）
+            SpiceOfLifeFabricFlavor.LOGGER.info("Removed existing health modifier for player {}",
+                    player.getName().getString());
 
             // 3\ 计算生命值增益
             // 3.1\ 这里计算默认增益
@@ -256,40 +337,40 @@ public class FoodUseHandler {
             // 3.3\ 计算函数
             String formula = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.Expression;
             double result = FunctionCaculator.evaluate(formula, Map.of(
-                "uniqueFoods", (double) unique,
-                "currentHealth", CurrentHealth
-            ));
+                    "uniqueFoods", (double) unique));
 
             double HealthBonus = BaseBonus + FrequencyBonus + result;// 3.4\ 计算总生命值奖励
 
             // 4\ 这里判断总增益是否超过最大生命值
             double HealthyMaximum = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.maxHealthy;
-            double newMaxHealth = Math.min(CurrentHealth + HealthBonus, HealthyMaximum);
+            double PureBonus = Math.min(HealthBonus, HealthyMaximum);
 
             // 这里应用生命修饰符
-            EntityAttributeModifier mod = new EntityAttributeModifier(HEALTH_MODIFIER_ID, HealthBonus, EntityAttributeModifier.Operation.ADD_VALUE);
+            EntityAttributeModifier mod = new EntityAttributeModifier(HEALTH_MODIFIER_ID, PureBonus , EntityAttributeModifier.Operation.ADD_VALUE);
             attr.addPersistentModifier(mod);
             SpiceOfLifeFabricFlavor.LOGGER.info("Added health modifier: {} for player {} (unique={}, perHp={}, bonus={})", mod, player.getName().getString(), unique, perHp, HealthBonus);
             if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.developerMode) {// 输出日志
                 player.sendMessage(Text.literal("apply: " + HealthBonus + ", " + FrequencyBonus + ", " + BaseBonus + ", " + FrequencyCount + ", " + unique), false);// 总生值奖励、频率奖励、基础奖励、频率计数、独特食物计数
             }
 
-            ServerPlayNetworking.send(player, new S2CHealthMaxPayload((int) newMaxHealth));// 发送生命值数据（仅用于GUI显示）
+            ServerPlayNetworking.send(player, new S2CHealthPayload((int) PureBonus));// 发送纯增益值给客户端（仅用于GUI显示）
 
             // 这里是恢复生命逻辑
             if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthToMaxOnIncrease) { // 恢复最大生命
                 player.setHealth(player.getMaxHealth());
-                SpiceOfLifeFabricFlavor.LOGGER.info("Player {} healed to max health: {}", player.getName().getString(), player.getMaxHealth());
-            } else if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthIncreaseOnIncrease > 0) { // 恢复指定生命 
+                SpiceOfLifeFabricFlavor.LOGGER.info("Player {} healed to max health: {}", player.getName().getString(),
+                        player.getMaxHealth());
+            } else if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthIncreaseOnIncrease > 0) { // 恢复指定生命
                 float currentHealth = player.getHealth();
                 float increase = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.healthIncreaseOnIncrease;
-                float newHealth = Math.min(currentHealth + increase, (float)player.getMaxHealth());
+                float newHealth = Math.min(currentHealth + increase, (float) player.getMaxHealth());
                 player.setHealth(newHealth);
                 SpiceOfLifeFabricFlavor.LOGGER.info("Player {} healed to max health: {}", player.getName().getString(), player.getMaxHealth());
             } else {}
         } catch (Exception e) {
-            player.sendMessage(Text.literal("[apply error]"), false);
-            SpiceOfLifeFabricFlavor.LOGGER.error("Failed to apply health modifier for player {}", player.getName().getString(), e);
+            player.sendMessage(Text.translatable("sol2f.msg.applyerror"), false);
+            SpiceOfLifeFabricFlavor.LOGGER.error("Failed to apply health modifier for player {}",
+                    player.getName().getString(), e);
         }
     }
 }

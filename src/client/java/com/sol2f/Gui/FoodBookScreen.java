@@ -1,4 +1,4 @@
-package com.sol2f.Gui;
+package com.sol2f.gui;
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -9,10 +9,10 @@ import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
-import com.sol2f.client.FoodClient;
-
 import java.util.List;
 import java.util.Optional;
+
+import com.sol2f.SpiceOfLifeFabricFlavorClient;
 
 public class FoodBookScreen extends Screen {
 
@@ -47,7 +47,7 @@ public class FoodBookScreen extends Screen {
         this.hoveredStack = ItemStack.EMPTY;
 
         // 计算分页
-        int totalItem = FoodClient.getConsumedCount();
+        int totalItem = SpiceOfLifeFabricFlavorClient.getConsumedCount();
         int pageCount = Math.max(1, (totalItem + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE);
         int maxOffset = pageCount - 1;
         scrollPageOffset = Math.min(0, Math.max(-maxOffset, scrollPageOffset));
@@ -85,8 +85,8 @@ public class FoodBookScreen extends Screen {
         }
     }
     private void renderItemGrid(DrawContext context, int guiLeft, int guiTop, int mouseX, int mouseY) {
-        int totalItem = FoodClient.getConsumedCount();
-        List<String> consumedItems = FoodClient.getConsumedSnapshot();
+        int totalItem = SpiceOfLifeFabricFlavorClient.getConsumedCount();
+        List<String> consumedItems = SpiceOfLifeFabricFlavorClient.getConsumedSnapshot();
         int startIndex = -scrollPageOffset * ITEMS_PER_PAGE;
 
         for (int row = 0; row < 8; row++) {
@@ -142,7 +142,7 @@ public class FoodBookScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-            int totalItem = FoodClient.getConsumedCount();
+            int totalItem = SpiceOfLifeFabricFlavorClient.getConsumedCount();
         int maxOffset = (totalItem + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE - 1;
 
         if (verticalAmount > 0) {

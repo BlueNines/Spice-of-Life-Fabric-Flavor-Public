@@ -34,8 +34,6 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 	public static final String MOD_ID = "sol2f";
 
 	// 这个日志记录器用于向控制台和日志文件写入文本
-	// 最佳实践是使用你的模组ID作为日志记录器的名称
-	// 这样，就可以清楚地知道是哪个模组写入了信息、警告和错误
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	// 当Logback不可用但developerMode=true时使用的备用写入器
 	private static BufferedWriter DEV_FILE_WRITER = null;
@@ -148,16 +146,11 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 				java.util.Map<String, String> m = new java.util.LinkedHashMap<>();
 				m.put("message", msg);
 				writeStructuredDevLog(m);
-			} catch (Throwable t) {
-				// 静默失败
-			}
+			} catch (Throwable t) {}
 		}
 	}
 
-	/**
-	 * 写入结构化开发日志行。
-	 * 每行格式: [yyyy-MM-dd HH:mm:ss]{"key"="value";"k2"="v2";}
-	 */
+	// 写入结构化开发日志行。
 	public static void writeStructuredDevLog(java.util.Map<String, String> fields) {
 		if (DEV_FILE_WRITER == null) return;
 		try {
@@ -180,8 +173,6 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 			sb.append('\n');
 			DEV_FILE_WRITER.write(sb.toString());
 			DEV_FILE_WRITER.flush();
-		} catch (Throwable t) {
-			// 静默失败
-		}
+		} catch (Throwable t) {}
 	}
 }

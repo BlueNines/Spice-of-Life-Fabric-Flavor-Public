@@ -1,4 +1,4 @@
-package com.sol2f.Gui;
+package com.sol2f.gui;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;

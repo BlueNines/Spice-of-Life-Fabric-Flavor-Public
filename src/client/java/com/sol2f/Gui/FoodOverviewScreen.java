@@ -1,13 +1,14 @@
-package com.sol2f.Gui;
+package com.sol2f.gui;
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+
+import com.sol2f.SpiceOfLifeFabricFlavorClient;
+
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
-
-import com.sol2f.client.FoodClient;
 
 public class FoodOverviewScreen extends Screen {
 
@@ -71,7 +72,7 @@ public class FoodOverviewScreen extends Screen {
         );
 
         int OverviewDrawWidth = 88;
-        Text OverviewFoodCount = Text.literal(FoodClient.getConsumedCount() + " / " + FoodClient.getAllCount());
+        Text OverviewFoodCount = Text.literal(SpiceOfLifeFabricFlavorClient.getConsumedCount() + " / " + SpiceOfLifeFabricFlavorClient.getAllCount());
         int FCFontWidth = textRenderer.getWidth(OverviewFoodCount);
         int FCDrawX = guiLeft + 23 + (OverviewDrawWidth - FCFontWidth) / 2;
         context.drawText(
@@ -83,7 +84,7 @@ public class FoodOverviewScreen extends Screen {
             false
         );
 
-        Text OverviewHealthyCount = Text.literal(FoodClient.getCurrentHealth() + " / " + FoodClient.getMaxHealth());
+        Text OverviewHealthyCount = Text.literal(SpiceOfLifeFabricFlavorClient.getCurrentHealth() + " / " + SpiceOfLifeFabricFlavorClient.getMaxHealth());// 当前增益血量 / 最大增益血量
         int HCFontWidth = textRenderer.getWidth(OverviewHealthyCount);
         int HCDrawX = guiLeft + 23 + (OverviewDrawWidth - HCFontWidth) / 2;
         context.drawText(

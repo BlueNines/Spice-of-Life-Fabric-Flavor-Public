@@ -2,11 +2,14 @@ package com.sol2f.mixin;
 
 import com.sol2f.server.FoodUseHandler;
 import com.sol2f.SpiceOfLifeFabricFlavor;
+import com.sol2f.config.Sol2FConfig;
+import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.FoodComponent;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,6 +27,17 @@ public class ItemFinishMixin {
             // 使用组件系统检查食物
             FoodComponent foodComponent = stack.get(DataComponentTypes.FOOD);
             if (foodComponent == null) return;  // 不是食物，直接返回
+            
+            // 黑名单检查wall，过滤掉黑名单物品
+            String itemId = Registries.ITEM.getId(stack.getItem()).toString();
+            if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.blacklist.contains(itemId)) {
+                if (SpiceOfLifeFabricFlavor.LOGGER.isDebugEnabled()) {
+                    SpiceOfLifeFabricFlavor.LOGGER.debug(
+                        "Item {} is blacklisted, skipping processing", itemId
+                    );
+                }
+                return;
+            }
             
             // 玩家类型检查
             if (!(consumer instanceof ServerPlayerEntity)) return;

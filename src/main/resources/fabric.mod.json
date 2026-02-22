@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "sol2f",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"name": "Spice of Life:Fabric Flavor",
 	"description": "一个fabric版本的食物奖励mod，基于Spice of Life重植。",
 	"authors": [
@@ -21,7 +21,7 @@
 		"client": [
 			"com.sol2f.SpiceOfLifeFabricFlavorClient"
 		],
-		"modmenu": ["com.sol2f.Gui.ModMenuLink"]
+		"modmenu": ["com.sol2f.gui.ModMenuLink"]
 	},
 	"mixins": [
 		"sol2f.mixins.json",

@@ -20,18 +20,18 @@ public class ServerEventHandlers {
             ServerPlayerEntity player = handler.player;// 获取玩家实例
             if (player == null) return;// 防止为null，避免空指针异常
 
-            Set<String> eaten = FoodUseHandler.getEatenFoods(player);// 返回空集而不是null，避免空指针异常
+            Set<String> eaten = FoodUseHandler.getEatenFoods(player);
             FoodUseHandler.applyHealthModifier(player, eaten);// 应用生命值修饰符，eaten不会为null，上面的方法保证了这一点
             FoodUseHandler.syncToClient(player, eaten);// 同步已消耗列表到客户端
 
-            ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(FoodUseHandler.ALLFoods)));// 发送所有食物的列表
+            ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(FoodUseHandler.getAllFoods())));// 发送所有食物的列表
             ServerPlayNetworking.send(player, new S2CFoodListPayload(new ArrayList<>(eaten)));// 发送食物的列表
-            ServerPlayNetworking.send(player, new S2CHealthMaxPayload(AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().healthy.maxHealthy));
+            ServerPlayNetworking.send(player, new S2CHealthMaxPayload(FoodUseHandler.calculateTheoreticalMaxHealthBonus()));
         });
 
         ServerPlayNetworking.registerGlobalReceiver(C2SRequestAllFoodListPayload.PACKET_ID, (payload, context) -> {
             ServerPlayerEntity player = context.player();
-            ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(FoodUseHandler.ALLFoods)));
+            ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(FoodUseHandler.getAllFoods())));
         });
 
         // 复制逻辑
