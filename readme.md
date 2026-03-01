@@ -8,8 +8,6 @@
 
 <H1 id="CN">概述</H1>
 
-fabric的 _生活调味料：胡萝卜版_ 部分功能移植mod
-
 本mod旨在通过增加血量上限奖励玩家食用新的食物，以加强玩家对整合包食物系统的动力，并平衡整合包的游戏难度。
 
 # mod~~食用~~指南
@@ -27,7 +25,7 @@ fabric的 _生活调味料：胡萝卜版_ 部分功能移植mod
 <details>
 <summary>maxHealthy | 血量增益上限</summary>
 
-```
+```json
 "maxHealthy": 5000,
 ```
 
@@ -38,7 +36,7 @@ fabric的 _生活调味料：胡萝卜版_ 部分功能移植mod
 <details>
 <summary>healthGain | 单次生命值奖励幅度</summary>
 
-```
+```json
 "healthGain": 2,
 ```
 每次奖励血量数
@@ -46,7 +44,7 @@ fabric的 _生活调味料：胡萝卜版_ 部分功能移植mod
 <details>
 <summary>resetOnDeath | 死亡时重置</summary>
 
-```
+```json
 resetOnDeath: false,
 ```
 
@@ -55,7 +53,7 @@ resetOnDeath: false,
 <details>
 <summary>developerMode | 调试模式</summary>
 
-```
+```json
 "developerMode": false,
 ```
 开发者模式，输出log记录玩家变更记录，建议不开启。
@@ -63,7 +61,7 @@ resetOnDeath: false,
 <details>
 <summary>healthToMaxOnIncrease | 奖励时将生命增益至上限</summary>
 
-```
+```json
 "healthToMaxOnIncrease": false
 ```
 是否在增加生命上限时恢复满血。
@@ -72,7 +70,7 @@ resetOnDeath: false,
 <details>
 <summary>Increasefrequency | 自定义奖励进度频率</summary>
   
-```
+```json
 "Increasefrequency": 4,
 ```
 
@@ -83,7 +81,7 @@ resetOnDeath: false,
 <details>
 <summary>frequencyGain | 自定义奖进度幅度</summary>
 
-```
+```json
 "frequencyGain": 4,
 ```
 
@@ -95,18 +93,17 @@ resetOnDeath: false,
 <details>
 <summary>healthIncreaseOnIncrease | 奖励时增益的血量</summary>
 
-```
+```json
 "healthIncreaseOnIncrease": 2,
 ```
 
 每次血量上限增益时回复的血量，若超过上限则回复至上限
-
 </details>
 
 <details>
 <summary>Expression | 自定义奖励计算表达式</summary>
   
-```
+```json
 "Expression": 0,
 ```
 
@@ -128,13 +125,12 @@ resetOnDeath: false,
   - 取大值:`max(num1, num2)`
   - 取小值:`min(num1, num2)`
 - 对数:`log(底数, 真数)`
-
 </details>
 
 <details>
-<summary>Expression | 黑名单食物</summary>
+<summary>blacklist | 黑名单食物</summary>
   
-```
+```json
 "blacklist": [
   "minecraft:rotten_flesh",
   "minecraft:spider_eye"
@@ -144,7 +140,6 @@ resetOnDeath: false,
 列表类型。列表中的食物不会被记录，已经食用的物品不会从统计中移除。在修改后，使用/sol2f sync AllFoodList 同步数据以确保tooltip显示正常，已经食用的食物tooltip仍然显示。
 
 每行输入一个物品ID，例如：minecraft:golden_apple
-
 </details>
 
 ### 客户端配置
@@ -154,38 +149,62 @@ resetOnDeath: false,
 <details>
 <summary>ShowConsumedTooltips | 显示已发现食物tooltip</summary>
   
-```
+```json
 "ShowConsumedTooltips": true,
 ```
 
 控制客户端的tooltip显示。
-
 </details>
 
 <details>
 <summary>ShowUnconsumedTooltips | 显示未发现食物tooltip</summary>
   
-```
+```json
 "ShowUnconsumedTooltips": true,
 ```
 
 控制客户端的tooltip显示。
-
 </details>
 
 ## 关于命令
 
-- ``/sol2f clearhealthy``重置当前玩家的生命值上限与所有食物摄入记录，需管理员权限。（版本：2.0+）
-- ``/sol2f getlist <player>``获取<player>的已食用列表。 （版本：2.7.0+）
-- ``/sol2f sync``同步所有数据。（版本3.1.0+）
-- ``/sol2f sync PlayerData``同步玩家数据。主要用于GUI显示和tooltip显示控制。（版本3.1.0+）
-- ``/sol2f sunc AllFoodList``同步食物数据：最新的非黑名单食物数据，玩家最大血量上限数据。主要用于GUI显示和tooltip显示控制。（版本3.1.0+）
+<details>
+<summary>CleanHealth | 重置玩家数据</summary>
+
+```
+/sol2f clearhealthy
+```
+
+重置当前玩家的生命值上限与所有食物摄入记录，需管理员权限。（版本：2.0+）
+
+</details>
+<details>
+<summary>GetPlayerData | 获取玩已发现列表</summary>
+
+```
+/sol2f getlist <player>
+```
+
+获取玩家已发现食物列表。
+</details>
+<details>
+<summary>Sync | 同步数据</summary>
+
+```
+/sol2f sync
+```
+
+同步所有数据。
+- ``/sol2f sync PlayerData``同步玩家数据。主要用于GUI显示和tooltip显示控制。
+- ``/sol2f sunc AllFoodList``同步食物数据：最新的非黑名单食物数据，玩家最大血量上限数据。主要用于GUI显示和tooltip显示控制。
+
+</details>
+
 
 
 ## 关于食物簿
 
 在修改配置后请使用命令同步数据以确保GUI显示的数据为最新数据。
-
 
 <details>
 <summary>食物簿页面</summary>
@@ -216,18 +235,50 @@ resetOnDeath: false,
 
 ## 物品
 
+<details>
+<summary>食物簿</summary>
+
 通过合成"食物簿"打开食物簿:
 ![food book](https://cdn.modrinth.com/data/cached_images/eb67b04a5cd10951c497e5d90ac9703d7a2415f7.png)
 
-## Q＆A
-**Q** 是否允许将此mod添加到整合包？<br>
-**A** 是的！该mod为平衡整合包设计，但是请不要使用整合包盈利（不允许下载前需要打赏赞助、不允许对未打赏或赞助或付费的用户限制下载或玩法、限制下载（包括但不限于下载前看广告、下载需要积分或代币、下载需要登陆或用户分级和等级等）请提供**直接**且**无限制**的下载通道）。
+</details>
 
-**Q** 是否允许将此mod上传至别的平台？<br>
-**A** 这是被允许的。但是不允许付费下载、限制下载（包括但不限于下载前看广告、下载需要积分或代币、下载需要登陆或用户分级和等级等）请提供**直接**且**无限制**的下载通道，请标注modrinth页面链接。除非您有高带宽的CDN，否则建议不要搬运mod文件提供下载服务。
+## 关于同步和配置的一些问题和机制汇总
 
-**Q** 针对任何形式的mod数据修改，那些操作被允许？<br>
-**A** 如有需要，mod的本地化文件允许修改，但不允许在中文和英文的翻译中进行署名（例如“由xxx翻译”“由xxx优化”），其他语言的翻译允许社区贡献和署名。不允许修改mod元数据。
+- 客户端tooltip：客户端的tooltip会显示所有已发现食物（不管是否存在于黑名单，机制应用于保存黑名单前已发现某一食物），未发现且处于黑名单内的食物不显示。
+- 服务端统计和增益机制：在黑名单修改后，玩家已发现的食物不受影响，未发现的食物不再计入统计。
+- 客户端GUI数据显示：客户端的GUI在修改配置后需要使用sync命令同步数据。包括：在修改了血量增益计算相关配置后，血量概述在执行sync后会重新计算并显示在客户端；在重设黑名单后，执行同步以同步客户端GUI的食物概述。客户端的食物概述显示的是所有已发现食物/非黑名单食物而不是所有已发现食物/所有已发现食物+非黑名单食物的并集
+- 服务端应用血量增益：在修改血量配置后，食用未发现食物或重生（未开启死亡重置配置）以重新计算血量增益值。机制：在每次食用新食物、死亡重生时会按照最新配置计算血量增益值。
+
+
+## 常见问题和许可声明
+### 总则
+本mod（Spice of Life: Fabric Flavor）默认状态下由作者保留所有权力。
+任何用户拥有自由的获取和使用mod的权利，任何机构或个人对mod的权利由以下细则约束。
+
+**关于在整合包和对外分发的Minecraft游戏（以下简称游戏）版本或基于游戏作品的二次创作（以下统称为整合包）、以及在公开的服务器或在线游戏（以下统称在线游戏）中引用本mod**
+
+本mod被允许在任何公开或私人分发的整合包、在线游戏中被引用。
+
+- 禁止使用整合包盈利或损害用户权利；
+- 不允许利用本mod进行任何直接或间接的商业化行为，包括但不限于：整合包或在线游戏客户端下载前需要打赏赞助、整合包或在线游戏客户端限制下载；
+- 不允许对未打赏或赞助或付费的用户限制玩法或用户权限；
+- 对于对外分发的整合包：必须提供**直接**且**无限制**的下载通道。
+
+**关于分发本mod和二次创作分发**
+
+分发是被允许的。二次创作中，mod的元数据和代码收到保护。
+
+- 分发任何原始版本或二次创作不允许付费下载、限制下载；
+- 任何分发原始版本和分发二次创作必须提供**直接**且**无限制**的下载通道，请标注modrinth页面链接。
+
+**关于二次创作（即基于本mod的任何版本进行任何形式的修改）**
+
+任何修改基于不修改mod元数据。
+- 如有需要，mod的本地化文件允许修改，但不允许在中文和英文的翻译中进行署名（例如“由xxx翻译”“由xxx优化”），其他语言的翻译允许社区贡献和署名。
+- 二次创作不允许修改mod元数据，你可以为mod增加额外本地化或修改GUI材质，为mod创作的额外材质包由其作者对所有内容负责，材质包作者对其材质包关于本mod的修改部分进行任何创作和本mod无关。
+
+*限制的定义：包括但不限于下载前看广告、下载需要积分或代币、下载需要登陆或用户分级和等级等。
 
 ##  依赖
 - <a herf="https://modrinth.com/mod/modmenu  ">Mod Menu</a> (v2.2.0+ 可选)配置页面入口
@@ -246,8 +297,7 @@ resetOnDeath: false,
   
 **Note:** This translation was generated with AI assistance. While efforts were made to ensure accuracy, please refer to the original Chinese text for the most precise technical details.
 
-## Overview  
-A Fabric mod that partially ports features from *Spice of Life: Carrot Edition* (Life Seasoning: Carrot Edition).  
+# Overview
 
 This mod aims to incentivize players to try new foods by rewarding them with increased maximum health, thereby strengthening engagement with the **mod pack**'s food system and balancing gameplay difficulty.
 
@@ -421,12 +471,40 @@ Controls whether the tooltip indicator for "Not yet consumed" foods is displayed
 
 ## About Commands
 
-- ``/sol2f clearhealthy`` Resets the current player's maximum health bonus and all food consumption records. Requires operator permissions. (Version: 2.0+)
-- ``/sol2f getlist <player>`` Retrieves the list of consumed foods for the specified `<player>`. (Version: 2.7.0+)
-- ``/sol2f sync`` Synchronizes all data (Player Data + Food List). (Version: 3.1.0+)
-- ``/sol2f sync PlayerData`` Synchronizes player-specific data. Primarily used to update GUI displays and tooltip states. (Version: 3.1.0+)
-- ``/sol2f sync AllFoodList`` Synchronizes food data: updates the list of non-blacklisted foods and the player's maximum health cap data. Primarily used to ensure GUI and tooltip displays are current after config changes. (Version: 3.1.0+)
+<details>
+<summary>CleanHealth | Reset Player Data</summary>
 
+```bash
+/sol2f clearhealthy
+```
+
+Resets the current player's maximum health bonus and all food consumption records. Requires operator permissions. (Version: 2.0+)
+
+</details>
+
+<details>
+<summary>GetPlayerData | Get Consumed List</summary>
+
+```bash
+/sol2f getlist <player>
+```
+
+Retrieves the list of consumed foods for the specified `<player>`.
+
+</details>
+
+<details>
+<summary>Sync | Synchronize Data</summary>
+
+```bash
+/sol2f sync
+```
+
+Synchronizes all data.
+- ``/sol2f sync PlayerData``: Synchronizes player-specific data. Primarily used to update GUI displays and tooltip states.
+- ``/sol2f sync AllFoodList``: Synchronizes food data (latest non-blacklisted food list and player max health cap). Primarily used to ensure GUI and tooltip displays are current after config changes.
+
+</details>
 
 ## About the Food Book
 
@@ -435,51 +513,47 @@ After modifying configurations, please use the sync commands to ensure the GUI d
 <details>
 <summary>Food Book Page</summary>
 
+![GUI_foodbook](https://cdn.modrinth.com/data/cached_images/4f93d1c6f1f49cb83cca3954847041212fe58945.png)
+- Use the mouse scroll wheel to flip pages.
 
-Use the mouse scroll wheel to flip pages.
 </details>
 
 <details>
 <summary>Overview Page</summary>
 
+![GUI_overview](https://cdn.modrinth.com/data/cached_images/c505c1e662cf59069f2e590b0e76631e83aaa22a.png)
+- **Health Summary:** Displays (Current Mod Bonus / Maximum Possible Mod Bonus).
 
-Health Summary: Displays (Current Mod Bonus / Maximum Possible Mod Bonus).
 </details>
 
 <details>
 <summary>Key Bindings</summary>
-
+  
 The shortcut key to open the GUI can be configured in Minecraft's Controls menu.
+![GUI_keybinding](https://cdn.modrinth.com/data/cached_images/4c0430cadb76f90f51a83419395ebc981ac96220.png)
 
 </details>
 
-
 ## Items
+
+<details>
+<summary>Food Book</summary>
 
 Craft the **"Food Book"** to open the food journal interface:
 ![food book](https://cdn.modrinth.com/data/cached_images/eb67b04a5cd10951c497e5d90ac9703d7a2415f7.png)
 
-## Q&A
+</details>
 
-**Q:** Am I allowed to include this mod in a **mod pack**?  
-**A:** Yes! This mod is specifically designed to balance **mod packs**. However, you are **not** allowed to profit from the **mod pack** using this mod. This strictly includes:
-- No requiring donations or sponsorships before downloading.
-- No restricting downloads or gameplay features for users who have not donated, sponsored, or paid.
-- No restrictive download conditions (including but not limited to: watching ads before download, requiring points/tokens, mandatory login, user tiers, or level requirements).  
-You must provide a **direct** and **unrestricted** download channel.
+## Synchronization and Configuration Mechanics
 
-**Q:** Am I allowed to re-upload this mod to other platforms?  
-**A:** Yes, redistribution is permitted under the following conditions:
-- Downloads must be **free** and **unrestricted**. Paid downloads or restrictive conditions (including but not limited to: watching ads before download, requiring points/tokens, mandatory login, user tiers, or level requirements) are **strictly prohibited**.
-- You must provide a **direct** and **unrestricted** download channel.
-- You must clearly attribute the original Modrinth page link.
-- Unless you operate a high-bandwidth CDN, it is recommended **not** to host the mod file yourself to provide download services; linking to the original source is preferred.
-
-**Q:** Regarding modifications to any form of mod data, what operations are permitted?  
-**A:** If necessary, the mod's localization files may be modified. However:
-- **No attribution** is allowed within the Chinese (`zh_cn`) or English (`en_us`) translation (e.g., adding lines like "Translated by xxx" or "Optimized by xxx").
-- Attribution **is** permitted for translations in other languages contributed by the community.
-- Modifying the mod's metadata (Including author, name, modID in file, and so on) is **strictly prohibited**.
+- **Client Tooltips:** Client tooltips will display all discovered foods (even if they are later added to the blacklist, as long as they were discovered before the blacklist change). Undiscovered foods that are on the blacklist will not show tooltips.
+- **Server Statistics & Gain Mechanism:** After modifying the blacklist, previously discovered foods remain unaffected. Undiscovered foods on the blacklist will no longer count towards statistics.
+- **Client GUI Data Display:** After modifying configurations, you must use the `sync` command to update the client GUI.
+  - After changing health gain calculations, executing `sync` will recalculate and display the updated health overview on the client.
+  - After resetting the blacklist, execute `sync` to update the food overview in the client GUI.
+  - The client's food overview displays: **(Discovered Foods) / (Non-Blacklisted Foods)**. It does *not* include blacklisted items in the denominator total if they were never discovered.
+- **Server Health Application:** After modifying health configurations, the health gain is recalculated when the player eats a new undiscovered food or respawns (if "Reset on Death" is disabled).
+  - **Mechanism:** Health gain is calculated based on the latest configuration every time a new food is eaten or upon death/respawn.
 
 ## Dependencies
 - <a href="https://modrinth.com/mod/modmenu">Mod Menu</a> (v2.2.0+, Optional) – Provides the entry point for the configuration screen.
