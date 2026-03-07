@@ -1,6 +1,6 @@
 package com.sol2f.mixin;
 
-import com.sol2f.server.FoodUseHandler;
+import com.sol2f.handler.HealthHandler;
 import com.sol2f.SpiceOfLifeFabricFlavor;
 import com.sol2f.config.Sol2FConfig;
 import me.shedaniel.autoconfig.AutoConfig;
@@ -30,7 +30,7 @@ public class ItemFinishMixin {
             
             // 黑名单检查wall，过滤掉黑名单物品
             String itemId = Registries.ITEM.getId(stack.getItem()).toString();
-            if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().features.blacklist.contains(itemId)) {
+            if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().health.blacklist.contains(itemId)) {
                 if (SpiceOfLifeFabricFlavor.LOGGER.isDebugEnabled()) {
                     SpiceOfLifeFabricFlavor.LOGGER.debug(
                         "Item {} is blacklisted, skipping processing", itemId
@@ -53,7 +53,7 @@ public class ItemFinishMixin {
             }
             
             // 调用你的处理逻辑
-            FoodUseHandler.onFoodEaten(serverPlayer, stack);
+            HealthHandler.onFoodEaten(serverPlayer, stack);
             
         } catch (Throwable t) {
             SpiceOfLifeFabricFlavor.LOGGER.error("ItemFinishMixin error", t);

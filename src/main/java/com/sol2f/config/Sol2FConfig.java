@@ -8,25 +8,38 @@ import java.util.Arrays;
 
 @Config(name = "spice-of-life-fabric-flavor")
 public class Sol2FConfig implements ConfigData {
-    public HealthySetting healthy = new HealthySetting();
-    public FeatureSetting features = new FeatureSetting();
+    public HealthSetting health = new HealthSetting();
+    public HungerSetting hunger = new HungerSetting();
+    
 
-    public static class HealthySetting {
-        public int maxHealthy = 5000;
-    }
+    public static class HealthSetting {
+        public int maxHealth = 5000;
 
-    public static class FeatureSetting {
-        public int healthyGain = 2;
-        public int Increasefrequency = 0;
-        public int frequencyGain = 2;
+        public int healthGain = 2;
+
         public boolean resetOnDeath = false;
-        public boolean developerMode = false;
+
         public boolean healthToMaxOnIncrease = false;
         public int healthIncreaseOnIncrease = 0;
+
         public String Expression = "0";
+
         public List<String> blacklist = Arrays.asList(
             "minecraft:rotten_flesh",
             "minecraft:spider_eye"
         );
+
+        public boolean developerMode = false;
+    }
+
+    public static class HungerSetting {
+        public boolean EnableNaturalHunger = false;
+        public int NaturalHungerPeriod = 12000; // ticks
+        public String NaturalHungerExpression = "1";
+
+        public boolean EnableSleepHunger = false;
+        public String SleepHungerExpression = "SleepDuration / 3000";
+
+        public int MinFoodLevel = 1;
     }
 }

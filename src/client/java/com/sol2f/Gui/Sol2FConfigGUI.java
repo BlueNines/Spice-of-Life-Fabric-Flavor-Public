@@ -32,139 +32,194 @@ public class Sol2FConfigGUI {
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
         // ===== 血量设置 =====
-        ConfigCategory healthyCat = builder.getOrCreateCategory(
-            Text.translatable("sol2f.gui.config.option.healthy")
+        ConfigCategory healthCat = builder.getOrCreateCategory(
+            Text.translatable("sol2f.gui.config.option.health")
         );
 
-        healthyCat.addEntry(
+        healthCat.addEntry(
             entryBuilder.startIntField(
-                Text.translatable("sol2f.gui.config.option.healthy.maxHealthy"),
-                Config.healthy.maxHealthy
+                Text.translatable("sol2f.gui.config.option.health.maxHealth"),
+                Config.health.maxHealth
             )
             .setTooltip(
-                Text.translatable("sol2f.gui.config.option.healthy.maxHealthy.@Tooltip")
+                Text.translatable("sol2f.gui.config.option.health.maxHealth.@Tooltip")
             )
             .setMin(2)
             .setMax(5000)
-            .setSaveConsumer(newValue -> Config.healthy.maxHealthy = newValue)
+            .setSaveConsumer(newValue -> Config.health.maxHealth = newValue)
             .build()
         );
 
-        // ===== 功能设置 =====
-        ConfigCategory featureCat = builder.getOrCreateCategory(
-            Text.translatable("sol2f.gui.config.option.features")
-        );
 
-        featureCat.addEntry(
+        healthCat.addEntry(
             entryBuilder.startIntField(
-                Text.translatable("sol2f.gui.config.option.features.healthyGain"),
-                Config.features.healthyGain
+                Text.translatable("sol2f.gui.config.option.health.healthGain"),
+                Config.health.healthGain
             )
             .setTooltip(
-                Text.translatable("sol2f.gui.config.option.features.healthyGain.@Tooltip")
+                Text.translatable("sol2f.gui.config.option.health.healthGain.@Tooltip")
             )
             .setMin(0).setMax(20)
-            .setSaveConsumer(v -> Config.features.healthyGain = v)
+            .setSaveConsumer(v -> Config.health.healthGain = v)
             .build()
         );
 
-        featureCat.addEntry(
-            entryBuilder.startIntField(
-                Text.translatable("sol2f.gui.config.option.features.Increasefrequency"),
-                Config.features.Increasefrequency
-            )
-            .setTooltip(
-                Text.translatable("sol2f.gui.config.option.features.Increasefrequency.@Tooltip")
-            )
-            .setMin(0).setMax(20)
-            .setSaveConsumer(v -> Config.features.Increasefrequency = v)
-            .build()
-        );
-
-        featureCat.addEntry(
-            entryBuilder.startIntField(
-                Text.translatable("sol2f.gui.config.option.features.frequencyGain"),
-                Config.features.frequencyGain
-            )
-            .setTooltip(
-                Text.translatable("sol2f.gui.config.option.features.frequencyGain.@Tooltip")
-            )
-            .setMin(1).setMax(30)
-            .setSaveConsumer(v -> Config.features.frequencyGain = v)
-            .build()
-        );
-
-        featureCat.addEntry(
+        healthCat.addEntry(
             entryBuilder.startBooleanToggle(
-                Text.translatable("sol2f.gui.config.option.features.resetOnDeath"),
-                Config.features.resetOnDeath
+                Text.translatable("sol2f.gui.config.option.health.resetOnDeath"),
+                Config.health.resetOnDeath
             )
             .setTooltip(
-                Text.translatable("sol2f.gui.config.option.features.resetOnDeath.@Tooltip")
+                Text.translatable("sol2f.gui.config.option.health.resetOnDeath.@Tooltip")
             )
-            .setSaveConsumer(v -> Config.features.resetOnDeath = v)
+            .setSaveConsumer(v -> Config.health.resetOnDeath = v)
             .build()
         );
 
-        featureCat.addEntry(
+        healthCat.addEntry(
             entryBuilder.startBooleanToggle(
-                Text.translatable("sol2f.gui.config.option.features.healthToMaxOnIncrease"),
-                Config.features.healthToMaxOnIncrease
+                Text.translatable("sol2f.gui.config.option.health.healthToMaxOnIncrease"),
+                Config.health.healthToMaxOnIncrease
             )
             .setTooltip(
-                Text.translatable("sol2f.gui.config.option.features.healthToMaxOnIncrease.@Tooltip")
+                Text.translatable("sol2f.gui.config.option.health.healthToMaxOnIncrease.@Tooltip")
             )
-            .setSaveConsumer(v -> Config.features.healthToMaxOnIncrease = v)
+            .setSaveConsumer(v -> Config.health.healthToMaxOnIncrease = v)
             .build()
         );
 
-        featureCat.addEntry(
+        healthCat.addEntry(
             entryBuilder.startIntField(
-                Text.translatable("sol2f.gui.config.option.features.healthIncreaseOnIncrease"),
-                Config.features.healthIncreaseOnIncrease
+                Text.translatable("sol2f.gui.config.option.health.healthIncreaseOnIncrease"),
+                Config.health.healthIncreaseOnIncrease
             )
             .setTooltip(
-                Text.translatable("sol2f.gui.config.option.features.healthIncreaseOnIncrease.@Tooltip")
+                Text.translatable("sol2f.gui.config.option.health.healthIncreaseOnIncrease.@Tooltip")
             )
             .setMin(0).setMax(20)
-            .setSaveConsumer(v -> Config.features.healthIncreaseOnIncrease = v)
+            .setSaveConsumer(v -> Config.health.healthIncreaseOnIncrease = v)
             .build()
         );
 
-        featureCat.addEntry(
+        healthCat.addEntry(
             entryBuilder.startStrField(
-                Text.translatable("sol2f.gui.config.option.features.Expression"),
-                Config.features.Expression
+                Text.translatable("sol2f.gui.config.option.health.Expression"),
+                Config.health.Expression
             )
             .setTooltip(
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[1]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[2]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[3]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[4]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[5]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[6]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[7]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[8]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[9]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[10]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[11]"),
-                Text.translatable("sol2f.gui.config.option.features.Expression.@Tooltip[12]")
+                Text.translatable("sol2f.gui.config.option.health.Expression.@Tooltip[1]"),
+                Text.translatable("sol2f.gui.config.option.health.Expression.@Tooltip[2]"),
+                Text.translatable("sol2f.gui.config.option.health.Expression.@Tooltip[3]"),
+                Text.translatable("sol2f.gui.config.option.health.Expression.@Tooltip[4]")
             )
-            .setSaveConsumer(v -> Config.features.Expression = v)
+            .setSaveConsumer(v -> Config.health.Expression = v)
             .build()
         );
 
-        featureCat.addEntry(
+        healthCat.addEntry(
             entryBuilder.startStrList(
-                Text.translatable("sol2f.gui.config.option.features.blacklist"),
-                Config.features.blacklist
+                Text.translatable("sol2f.gui.config.option.health.blacklist"),
+                Config.health.blacklist
             )
             .setTooltip(
-                Text.translatable("sol2f.gui.config.option.features.blacklist.@Tooltip[1]"),
-                Text.translatable("sol2f.gui.config.option.features.blacklist.@Tooltip[2]"),
-                Text.translatable("sol2f.gui.config.option.features.blacklist.@Tooltip[3]")
+                Text.translatable("sol2f.gui.config.option.health.blacklist.@Tooltip[1]"),
+                Text.translatable("sol2f.gui.config.option.health.blacklist.@Tooltip[2]"),
+                Text.translatable("sol2f.gui.config.option.health.blacklist.@Tooltip[3]")
             )
-            .setSaveConsumer(v -> Config.features.blacklist = v)
+            .setSaveConsumer(v -> Config.health.blacklist = v)
+            .build()
+        );
+
+        healthCat.addEntry(
+            entryBuilder.startBooleanToggle(
+                Text.translatable("sol2f.gui.config.option.health.developerMode"),
+                Config.health.developerMode
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.health.developerMode.@Tooltip")
+            )
+            .setSaveConsumer(v -> Config.health.developerMode = v)
+            .build()
+        );
+
+        // ===== 饥饿设置 =====
+        ConfigCategory hungerCat = builder.getOrCreateCategory(
+            Text.translatable("sol2f.gui.config.option.hunger")
+        );
+
+        hungerCat.addEntry(
+            entryBuilder.startBooleanToggle(
+                Text.translatable("sol2f.gui.config.option.hunger.EnableNaturalHunger"),
+                Config.hunger.EnableNaturalHunger
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.hunger.EnableNaturalHunger.@Tooltip")
+            )
+            .setSaveConsumer(v -> Config.hunger.EnableNaturalHunger = v)
+            .build()
+        );
+
+        hungerCat.addEntry(
+            entryBuilder.startIntField(
+                Text.translatable("sol2f.gui.config.option.hunger.NaturalHungerPeriod"),
+                Config.hunger.NaturalHungerPeriod
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.hunger.NaturalHungerPeriod.@Tooltip")
+            )
+            .setMin(1)
+            .setSaveConsumer(v -> Config.hunger.NaturalHungerPeriod = v)
+            .build()
+        );
+
+        hungerCat.addEntry(
+            entryBuilder.startStrField(
+                Text.translatable("sol2f.gui.config.option.hunger.NaturalHungerExpression"),
+                Config.hunger.NaturalHungerExpression
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.hunger.NaturalHungerExpression.@Tooltip[1]"),
+                Text.translatable("sol2f.gui.config.option.hunger.NaturalHungerExpression.@Tooltip[2]")
+            )
+            .setSaveConsumer(v -> Config.hunger.NaturalHungerExpression = v)
+            .build()
+        );
+
+        hungerCat.addEntry(
+            entryBuilder.startBooleanToggle(
+                Text.translatable("sol2f.gui.config.option.hunger.EnableSleepHunger"),
+                Config.hunger.EnableSleepHunger
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.hunger.EnableSleepHunger.@Tooltip")
+            )
+            .setSaveConsumer(v -> Config.hunger.EnableSleepHunger = v)
+            .build()
+        );
+
+        hungerCat.addEntry(
+            entryBuilder.startStrField(
+                Text.translatable("sol2f.gui.config.option.hunger.SleepHungerExpression"),
+                Config.hunger.SleepHungerExpression
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.hunger.SleepHungerExpression.@Tooltip[1]"),
+                Text.translatable("sol2f.gui.config.option.hunger.SleepHungerExpression.@Tooltip[2]")
+            )
+            .setSaveConsumer(v -> Config.hunger.SleepHungerExpression = v)
+            .build()
+        );
+
+        hungerCat.addEntry(
+            entryBuilder.startIntField(
+                Text.translatable("sol2f.gui.config.option.hunger.MinFoodLevel"),
+                Config.hunger.MinFoodLevel
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.hunger.MinFoodLevel.@Tooltip")
+            )
+            .setMin(0).setMax(20)
+            .setSaveConsumer(v -> Config.hunger.MinFoodLevel = v)
             .build()
         );
 

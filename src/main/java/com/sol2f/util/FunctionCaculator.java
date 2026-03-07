@@ -57,9 +57,67 @@ public class FunctionCaculator {
         }
     };
 
-    public static final Function[] CUSTOM_FUNCTIONS = { FLOOR, CEIL, ROUND, MIN, MAX, POW };// 自定义函数数组
+    public static final Function IF = new Function("if", 3) {// 定义条件判断函数
+        @Override
+        public double apply(double... args) {
+            return args[0] > 0 ? args[1] : args[2];
+        }
+    };
 
-    public static Expression buildExpression(String exprStr, String... variables) {
+    public static final Function OR = new Function("or", 2) {// 定义或函数
+        @Override
+        public double apply(double... args) {
+            return args[0] > 0 || args[1] > 0 ? 1 : 0;
+        }
+    };
+
+    public static final Function AND = new Function("and", 2) {// 定义与函数
+        @Override
+        public double apply(double... args) {
+            return args[0] > 0 && args[1] > 0 ? 1 : 0;
+        }
+    };
+
+    public static final Function NOT = new Function("not", 1) {// 定义非函数
+        @Override
+        public double apply(double... args) {
+            return args[0] > 0 ? 0 : 1;
+        }
+    };
+
+    public static final Function LT = new Function("lt", 2) {// 定义lessthan函数，返回0或1
+    @Override
+        public double apply(double... args) {
+            return args[0] < args[1] ? 1 : 0;
+        }
+    };
+
+    public static final Function GT = new Function("gt", 2) {// 定义greaterthan函数，返回0或1
+        @Override
+        public double apply(double... args) {
+            return args[0] > args[1] ? 1 : 0;
+        }
+    };
+
+    public static final Function EQ = new Function("eq", 2) {// 定义equals函数，返回0或1
+        @Override
+        public double apply(double... args) {
+            return args[0] == args[1] ? 1 : 0;
+        }
+    };
+
+    public static final Function NEQ = new Function("neq", 2) {// 定义not equals函数，返回0或1
+        @Override
+        public double apply(double... args) {
+            return args[0] != args[1] ? 1 : 0;
+        }
+    };
+
+    public static final Function[] CUSTOM_FUNCTIONS = { FLOOR, CEIL, ROUND, MIN, MAX, POW, LOG, IF, OR, AND, NOT, LT, GT, EQ, NEQ };// 自定义函数数组
+
+
+
+    public static Expression buildExpression(String exprStr, String... variables) {// 构建高级表达式
         if (exprStr == null || exprStr.trim().isEmpty()) {
             throw new IllegalArgumentException("Expression string cannot be null or empty");
         }
@@ -73,11 +131,14 @@ public class FunctionCaculator {
         }
     }
 
-    public static double evaluate(String expressionStr, Map<String, Double> variables) {
+
+    public static double evaluate(String expressionStr, Map<String, Double> variables) {// 计算高级表达式
+        if (expressionStr == null || expressionStr.trim().isEmpty()) {
+            throw new IllegalArgumentException("Expression string cannot be null or empty");
+        }
         if (variables == null) {
             throw new IllegalArgumentException("Variables map cannot be null");
         }
-
         Map<String, Double> allVars = new HashMap<>(variables);
         allVars.put("e", Math.E);
         allVars.put("pi", Math.PI);
@@ -92,5 +153,5 @@ public class FunctionCaculator {
         } catch (ArithmeticException e) {
             throw new IllegalArgumentException("Error evaluating expression: " + e.getMessage(), e);
         }
-    };
+    }
 }
