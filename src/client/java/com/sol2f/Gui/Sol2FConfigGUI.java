@@ -27,7 +27,7 @@ public class Sol2FConfigGUI {
             .setSavingRunnable(() -> {
                 AutoConfig.getConfigHolder(Sol2FConfig.class).save();
                 AutoConfig.getConfigHolder(SOL2FClientConfig.class).save();
-            });// 保存当前 config 实例（AutoConfig 自动写入文件）
+            });
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
@@ -119,26 +119,14 @@ public class Sol2FConfigGUI {
         healthCat.addEntry(
             entryBuilder.startStrList(
                 Text.translatable("sol2f.gui.config.option.health.blacklist"),
-                Config.health.blacklist
+                Config.health.BlackList
             )
             .setTooltip(
                 Text.translatable("sol2f.gui.config.option.health.blacklist.@Tooltip[1]"),
                 Text.translatable("sol2f.gui.config.option.health.blacklist.@Tooltip[2]"),
                 Text.translatable("sol2f.gui.config.option.health.blacklist.@Tooltip[3]")
             )
-            .setSaveConsumer(v -> Config.health.blacklist = v)
-            .build()
-        );
-
-        healthCat.addEntry(
-            entryBuilder.startBooleanToggle(
-                Text.translatable("sol2f.gui.config.option.health.developerMode"),
-                Config.health.developerMode
-            )
-            .setTooltip(
-                Text.translatable("sol2f.gui.config.option.health.developerMode.@Tooltip")
-            )
-            .setSaveConsumer(v -> Config.health.developerMode = v)
+            .setSaveConsumer(v -> Config.health.BlackList = v)
             .build()
         );
 
@@ -223,6 +211,72 @@ public class Sol2FConfigGUI {
             .build()
         );
 
+        // ===== 食物设置 =====
+        ConfigCategory foodCat = builder.getOrCreateCategory(
+            Text.translatable("sol2f.gui.config.option.food")
+        );
+        foodCat.addEntry(
+            builder.entryBuilder()
+                .startTextDescription(Text.translatable("sol2f.gui.config.option.food.@Notice"))
+                .build());
+        foodCat.addEntry(
+            entryBuilder.startBooleanToggle(
+                Text.translatable("sol2f.gui.config.option.food.EnableNutritionModification"),
+                Config.food.EnableNutritionModification
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.food.EnableNutritionModification.@Tooltip[1]"),
+                Text.translatable("sol2f.gui.config.option.food.EnableNutritionModification.@Tooltip[2]")
+            )
+            .setSaveConsumer(v -> Config.food.EnableNutritionModification = v)
+            .build()
+        );
+        foodCat.addEntry(
+            entryBuilder.startIntField(
+                Text.translatable("sol2f.gui.config.option.food.RecentShortListSize"),
+                Config.food.RecentShortListSize
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.food.RecentShortListSize.@Tooltip")
+            )
+            .setSaveConsumer(v -> Config.food.RecentShortListSize = v)
+            .build()
+        );
+        foodCat.addEntry(
+            entryBuilder.startIntField(
+                Text.translatable("sol2f.gui.config.option.food.RecentLongListSize"),
+                Config.food.RecentLongListSize
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.food.RecentLongListSize.@Tooltip")
+            )
+            .setSaveConsumer(v -> Config.food.RecentLongListSize = v)
+            .build()
+        );
+        foodCat.addEntry(
+            entryBuilder.startStrList(
+                Text.translatable("sol2f.gui.config.option.food.BlackList"),
+                Config.food.Blacklist
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.food.BlackList.@Tooltip")
+            )
+            .setSaveConsumer(v -> Config.food.Blacklist = v)
+            .build()
+        );
+        foodCat.addEntry(
+            entryBuilder.startStrField(
+                Text.translatable("sol2f.gui.config.option.food.NutritionExpression"),
+                Config.food.NutritionExpression
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.food.NutritionExpression.@Tooltip")
+            )
+            .setSaveConsumer(v -> Config.food.NutritionExpression = v)
+            .build()
+        );
+
+        // ===== GUI 设置 =====
         ConfigCategory guiCat = builder.getOrCreateCategory(
             Text.translatable("sol2f.gui.config.option.gui")
         );
@@ -246,6 +300,21 @@ public class Sol2FConfigGUI {
                 Text.translatable("sol2f.gui.config.option.gui.ShowConsumedTooltips.@Tooltip")
             )
             .setSaveConsumer(v -> ClientConfig.GUISetting.ShowConsumedTooltips = v)
+            .build()
+        );
+
+        ConfigCategory devCat = builder.getOrCreateCategory(
+            Text.translatable("sol2f.gui.config.option.dev")
+        );
+        devCat.addEntry(
+            entryBuilder.startBooleanToggle(
+                Text.translatable("sol2f.gui.config.option.dev.developerMode"),
+                Config.dev.DeveloperMode
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.dev.developerMode.@Tooltip")
+            )
+            .setSaveConsumer(v -> Config.dev.DeveloperMode = v)
             .build()
         );
 

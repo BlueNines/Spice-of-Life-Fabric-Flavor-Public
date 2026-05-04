@@ -10,7 +10,8 @@ import java.util.Arrays;
 public class Sol2FConfig implements ConfigData {
     public HealthSetting health = new HealthSetting();
     public HungerSetting hunger = new HungerSetting();
-    
+    public FoodSetting food = new FoodSetting();
+    public DeveloperSetting dev = new DeveloperSetting();
 
     public static class HealthSetting {
         public int maxHealth = 5000;
@@ -24,12 +25,10 @@ public class Sol2FConfig implements ConfigData {
 
         public String Expression = "0";
 
-        public List<String> blacklist = Arrays.asList(
+        public List<String> BlackList = Arrays.asList(
             "minecraft:rotten_flesh",
             "minecraft:spider_eye"
         );
-
-        public boolean developerMode = false;
     }
 
     public static class HungerSetting {
@@ -41,5 +40,23 @@ public class Sol2FConfig implements ConfigData {
         public String SleepHungerExpression = "SleepDuration / 3000";
 
         public int MinFoodLevel = 1;
+    }
+
+    public static class FoodSetting {
+        public boolean EnableNutritionModification = false;
+        public int RecentShortListSize = 16;
+        public int RecentLongListSize = 512;
+
+        public List<String> Blacklist = Arrays.asList(
+            "minecraft:rotten_flesh",
+            "minecraft:spider_eye",
+            "minecraft:golden_apple"
+        );
+
+        public String NutritionExpression = "nutrition";
+    }
+    
+    public static class DeveloperSetting {
+        public boolean DeveloperMode = false;
     }
 }

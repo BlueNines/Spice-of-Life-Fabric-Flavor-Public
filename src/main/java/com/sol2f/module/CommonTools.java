@@ -1,13 +1,73 @@
-package com.sol2f.util;
-
-import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
-import net.objecthunter.exp4j.function.Function;
+package com.sol2f.module;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class FunctionCaculator {
+import com.sol2f.SpiceOfLifeFabricFlavor;
+
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
+import net.objecthunter.exp4j.function.Function;
+
+public class CommonTools {
+    /**
+     * 读取玩家的持久化 NBT 数据
+     * 
+     * @param player 玩家
+     * @return 持久化 NBT 数据
+     */
+    static NbtCompound readPersistentCompound(ServerPlayerEntity player) {
+        if (player instanceof com.sol2f.interfaces.IEntityDataSaver saver) {
+            return saver.getPersistentData();
+        }
+
+        SpiceOfLifeFabricFlavor.LOGGER.error("Failed to read persistent compound");
+        return new NbtCompound();
+    }
+
+    /**
+     * 写入玩家的持久化 NBT 数据
+     * 
+     * @param player 玩家
+     * @param data 持久化 NBT 数据
+     */
+    static void writePersistentCompound(ServerPlayerEntity player, NbtCompound data) {
+        if (player instanceof com.sol2f.interfaces.IEntityDataSaver saver) {
+            NbtCompound persistent = saver.getPersistentData();
+            for (String key : data.getKeys()) {
+                persistent.put(key, data.get(key));
+            }
+            return;
+        }
+        SpiceOfLifeFabricFlavor.LOGGER.error("Failed to write persistent compound. Player is not IEntityDataSaver!");
+    }
+
+    /**
+     * 检查物品是否是食物
+     * 
+     * @param stack item stack
+     * @return 如果是食物返回 true
+     */
+    public static boolean isFoodItem(ItemStack stack) {
+        return stack != null && stack.contains(DataComponentTypes.FOOD);
+    }
+
+    /**
+     * 检查物品是否是食物
+     * 
+     * @param item item
+     * @return 如果是食物返回 true
+     */
+    public static boolean isFoodItem(Item item) {
+        return item != null && item.getComponents().contains(DataComponentTypes.FOOD);
+    }
+
+    // 函数计算器部分
     public static final Function FLOOR = new Function("floor", 1) {// 定义向下取整函数
         @Override
         public double apply(double... args) {
@@ -113,11 +173,9 @@ public class FunctionCaculator {
         }
     };
 
-    public static final Function[] CUSTOM_FUNCTIONS = { FLOOR, CEIL, ROUND, MIN, MAX, POW, LOG, IF, OR, AND, NOT, LT, GT, EQ, NEQ };// 自定义函数数组
+    public static final Function[] CUSTOM_FUNCTIONS = { FLOOR, CEIL, ROUND, MIN, MAX, POW, LOG, IF, OR, AND, NOT, LT, GT, EQ, NEQ };
 
-
-
-    public static Expression buildExpression(String exprStr, String... variables) {// 构建高级表达式
+    public static Expression buildExpression(String exprStr, String... variables) {
         if (exprStr == null || exprStr.trim().isEmpty()) {
             throw new IllegalArgumentException("Expression string cannot be null or empty");
         }
@@ -132,7 +190,7 @@ public class FunctionCaculator {
     }
 
 
-    public static double evaluate(String expressionStr, Map<String, Double> variables) {// 计算高级表达式
+    public static double evaluate(String expressionStr, Map<String, Double> variables) {
         if (expressionStr == null || expressionStr.trim().isEmpty()) {
             throw new IllegalArgumentException("Expression string cannot be null or empty");
         }

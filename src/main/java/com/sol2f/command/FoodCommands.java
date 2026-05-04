@@ -2,8 +2,7 @@ package com.sol2f.command;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.sol2f.SpiceOfLifeFabricFlavor;
-import com.sol2f.data.PlayerFoodData;
-import com.sol2f.handler.HealthHandler;
+import com.sol2f.module.HealthModule;
 import com.sol2f.network.payload.S2CAllFoodListPayload;
 import com.sol2f.network.payload.S2CFoodListPayload;
 import com.sol2f.network.payload.S2CHealthPayload;
@@ -44,7 +43,7 @@ public class FoodCommands {
                     }
 
                     try {// 清除玩家已食用食物记录
-                        HealthHandler.clearEatenFoods(player);
+                        HealthModule.cleanEatenFoods(player);
                         src.sendFeedback(() -> Text.translatable("sol2f.commands.clearhealthy.success"), false);
                     } catch (Exception e) {
                         SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: failed to clear healthy", e);
@@ -97,7 +96,7 @@ public class FoodCommands {
         }
 
         // 获取已食用食物 ID 列表
-        Set<String> eatenFoods = PlayerFoodData.getEatenFoods(target);
+        Set<String> eatenFoods = HealthModule.getEatenFoods(target);
         String timeStr = LocalDateTime.now().format(TIME_FORMAT);
 
         // 构建输出
@@ -121,11 +120,11 @@ public class FoodCommands {
             switch (syncType.toLowerCase()) {
                 case "allfoodlist":
                     // 获取并同步所有非黑名单食物列表
-                    Set<String> allFoods = HealthHandler.getAllFoods();
+                    Set<String> allFoods = HealthModule.getAllFoods();
                     ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(allFoods)));
                     
                     // 重新计算并发送理论最大增益值
-                    int recalculatedMaxBonus = HealthHandler.calculateTheoreticalMaxHealthBonus();
+                    int recalculatedMaxBonus = HealthModule.calculateTheoreticalMaxHealthBonus();
                     ServerPlayNetworking.send(player, new S2CHealthMaxPayload(recalculatedMaxBonus));
                     
                     source.sendFeedback(() -> Text.translatable("sol2f.commands.sync.allfoodlist.success"), false);
@@ -133,7 +132,7 @@ public class FoodCommands {
                     
                 case "playerdata":
                     // 同步玩家数据
-                    Set<String> eatenFoods = PlayerFoodData.getEatenFoods(player);
+                    Set<String> eatenFoods = HealthModule.getEatenFoods(player);
                     ServerPlayNetworking.send(player, new S2CFoodListPayload(new ArrayList<>(eatenFoods)));
 
                     source.sendFeedback(() -> Text.translatable("sol2f.commands.sync.playerdata.success"), false);
@@ -142,11 +141,11 @@ public class FoodCommands {
                 case "both":
                 default:
                     // 同步所有数据
-                    ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(HealthHandler.getAllFoods())));
-                    Set<String> playerEaten = PlayerFoodData.getEatenFoods(player);
+                    ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(HealthModule.getAllFoods())));
+                    Set<String> playerEaten = HealthModule.getEatenFoods(player);
                     ServerPlayNetworking.send(player, new S2CFoodListPayload(new ArrayList<>(playerEaten)));
                     ServerPlayNetworking.send(player, new S2CHealthPayload((int) player.getMaxHealth()));
-                    int maxBonus = HealthHandler.calculateTheoreticalMaxHealthBonus();
+                    int maxBonus = HealthModule.calculateTheoreticalMaxHealthBonus();
                     ServerPlayNetworking.send(player, new S2CHealthMaxPayload(maxBonus));
                     
                     source.sendFeedback(() -> Text.translatable("sol2f.commands.sync.both.success"), false);

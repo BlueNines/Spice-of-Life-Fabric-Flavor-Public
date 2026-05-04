@@ -1,4 +1,4 @@
-package com.sol2f.handler;
+package com.sol2f.module;
 
 import net.minecraft.server.network.ServerPlayerEntity;
 import me.shedaniel.autoconfig.AutoConfig;
@@ -7,29 +7,28 @@ import java.util.Map;
 import java.util.HashMap;
 
 import com.sol2f.config.Sol2FConfig;
-import com.sol2f.util.FunctionCaculator;
 import com.sol2f.SpiceOfLifeFabricFlavor;
 
-public class HungerHandler {
+public class HungerModule {
     public static void PlayerNaturalHungerHandler(ServerPlayerEntity player) {
-        Sol2FConfig Config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
+        Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
 
         try {
             Map<String, Double> vars = GetAdvancedPlayerStateVariables(player);
             int FoodLevel = vars.get("FoodLevel").intValue();
-            String Formula = Config.hunger.NaturalHungerExpression;
-            double Result = FunctionCaculator.evaluate(Formula, vars);
+            String Formula = config.hunger.NaturalHungerExpression;
+            double Result = CommonTools.evaluate(Formula, vars);
 
-            if (FoodLevel <= Config.hunger.MinFoodLevel) {
-                if (Config.health.developerMode) {
-                    SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HungerHandler.PlayerNaturalHungerHandler | Skip applying hunger change: Current food level ({}) is already at or below minimum ({}).", FoodLevel, Config.hunger.MinFoodLevel);
+            if (FoodLevel <= config.hunger.MinFoodLevel) {
+                if (config.dev.DeveloperMode) {
+                    SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HungerHandler.PlayerNaturalHungerHandler | Skip applying hunger change: Current food level ({}) is already at or below minimum ({}).", FoodLevel, config.hunger.MinFoodLevel);
                 }
                 return;
             }
-            int NewFoodLevel = Math.max(FoodLevel - (int) Math.round(Result), Config.hunger.MinFoodLevel);
+            int NewFoodLevel = Math.max(FoodLevel - (int) Math.round(Result), config.hunger.MinFoodLevel);
             player.getHungerManager().setFoodLevel(NewFoodLevel);
 
-            if (Config.health.developerMode) {
+            if (config.dev.DeveloperMode) {
                 SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HungerHandler.PlayerNaturalHungerHandler | Hunger updated. Result:{}, OldFoodLevel:{}, NewFoodLevel:{}", Result, FoodLevel, NewFoodLevel);
             }
         } catch (Exception e) {
@@ -38,25 +37,25 @@ public class HungerHandler {
     }
 
     public static void PlayerSleepHungerHandler(ServerPlayerEntity player, int SleepDuration) {
-        Sol2FConfig Config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
-        if (Config.hunger.EnableSleepHunger) {
+        Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
+        if (config.hunger.EnableSleepHunger) {
             try {
                 int FoodLevel = GetAdvancedPlayerStateVariables(player).get("FoodLevel").intValue();
-                String Formula = Config.hunger.SleepHungerExpression;
+                String Formula = config.hunger.SleepHungerExpression;
                 Map<String, Double> vars = GetAdvancedPlayerStateVariables(player);
                 vars.put("SleepDuration", (double) SleepDuration);
-                double Result = FunctionCaculator.evaluate(Formula, vars);
+                double Result = CommonTools.evaluate(Formula, vars);
 
-                if (FoodLevel <= Config.hunger.MinFoodLevel) {
-                    if (Config.health.developerMode) {
-                        SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HungerHandler.PlayerSleepHungerHandler | Skip applying hunger change: Current food level ({}) is already at or below minimum ({}).", FoodLevel, Config.hunger.MinFoodLevel);
+                if (FoodLevel <= config.hunger.MinFoodLevel) {
+                    if (config.dev.DeveloperMode) {
+                        SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HungerHandler.PlayerSleepHungerHandler | Skip applying hunger change: Current food level ({}) is already at or below minimum ({}).", FoodLevel, config.hunger.MinFoodLevel);
                     }
                     return;
                 }
-                int NewFoodLevel = Math.max(FoodLevel - (int) Math.round(Result), Config.hunger.MinFoodLevel);
+                int NewFoodLevel = Math.max(FoodLevel - (int) Math.round(Result), config.hunger.MinFoodLevel);
                 player.getHungerManager().setFoodLevel(NewFoodLevel);
 
-                if (Config.health.developerMode) {
+                if (config.dev.DeveloperMode) {
                     SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HungerHandler.PlayerSleepHungerHandler | Hunger updated. Result:{}, OldFoodLevel:{}, NewFoodLevel:{}", Result, FoodLevel, NewFoodLevel);
                 }
             } catch (Exception e) {
@@ -66,7 +65,7 @@ public class HungerHandler {
     }
 
     public static Map<String, Double> GetAdvancedPlayerStateVariables(ServerPlayerEntity player) {
-        Sol2FConfig Config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
+        Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
 
         Map<String, Double> vars = new HashMap<>();
 
@@ -99,6 +98,7 @@ public class HungerHandler {
         boolean isCrawling = player.isCrawling(); // 是否爬行 (不在水中)
         vars.put("isCrawling", isCrawling ? 1.0 : 0.0);
 
+        @SuppressWarnings("deprecation")
         boolean BrightnessAtEyes = player.getBrightnessAtEyes() > 0.5; // 玩家眼睛位置坐标的光照强度
         vars.put("BrightnessAtEyes", BrightnessAtEyes ? 1.0 : 0.0);
 
@@ -109,14 +109,14 @@ public class HungerHandler {
         vars.put("Saturation", (double) Saturation);
         vars.put("Exhaustion", (double) Exhaustion);
 
-        if (Config.health.developerMode) {
+        if (config.dev.DeveloperMode) {
             SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HungerHandler.GetAdvancedPlayerStateVariables | Get advanced player state variables successfully. isTouchingWater: {}, isBeingRainedOn: {}, isTouchingLava: {}, isWet: {}, isSprinting: {}, isSneaking: {}, isSwimming: {}, isCrawling: {}, BrightnessAtEyes: {}, FoodLevel: {}, Saturation: {}, Exhaustion: {}", isTouchingWater, isBeingRainedOn, isTouchingLava, isWet, isSprinting, isSneaking, isSwimming, isCrawling, BrightnessAtEyes, FoodLevel, Saturation, Exhaustion);
         }
         return vars;
     }
 
     public static Map<String, Double> GetPlayerStateVariables(ServerPlayerEntity player) {
-        Sol2FConfig Config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
+        Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
 
         Map<String, Double> vars = new HashMap<>();
 
@@ -132,7 +132,7 @@ public class HungerHandler {
         vars.put("Saturation", (double) Saturation);
         vars.put("Exhaustion", (double) Exhaustion);
 
-        if (Config.health.developerMode) {
+        if (config.dev.DeveloperMode) {
             SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HungerHandler.GetPlayerStateVariables | Get player state variables successfully. FoodLevel: {}, Saturation: {}, Exhaustion: {}", FoodLevel, Saturation, Exhaustion);
         }
 

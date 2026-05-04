@@ -13,6 +13,7 @@ import com.sol2f.interfaces.IEntityDataSaver;
 @Mixin(Entity.class)
 public abstract class PlayerEntityMixin implements IEntityDataSaver {
     private NbtCompound persistentData;
+
     private transient int HungerTickCounter = 0;// 用于给Hunger功能的tick计数
     private int SleepStartTick = 0;
 
@@ -63,6 +64,4 @@ public abstract class PlayerEntityMixin implements IEntityDataSaver {
             }
         }
     }
-
-
 }

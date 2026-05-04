@@ -16,14 +16,15 @@
 
 ## 关于配置
 
-所有配置项以health计算，2health=1heart（红心）
-
 ### 服务端配置
 
 这些配置存放于 ``/config/spice-of-life-fabric-flavor.json``。
 这些配置在服务端生效，本地游戏版本的配置影响本地游戏存档。
 
 #### 生命增益系统
+
+所有配置项以health计算，2health=1heart（红心）
+
 <details><summary>maxHealth | 最大血量</summary>
 
 - 类型: int
@@ -101,6 +102,9 @@
 > 机制: 在每次食用新食物、死亡重生时会按照最新配置计算血量增益值
 
 #### 饱食度衰减系统
+
+所有配置项以FoodLevel(饱食度)计算，2 FoodLevel=1 小鸡腿图标
+
 <details><summary>EnableNaturalHunger | 启用自然饥饿</summary>
 
 - 类型: boolean

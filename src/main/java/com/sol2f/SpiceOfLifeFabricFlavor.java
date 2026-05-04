@@ -43,7 +43,7 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
         LOGGER.info("SpiceOfLife: initializing");
         AutoConfig.register(Sol2FConfig.class, GsonConfigSerializer::new);
 
-        if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().health.developerMode) {
+        if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().dev.DeveloperMode) {
             try {
                 Path gameDir = net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir();
                 Path logsDir = gameDir.resolve("logs").resolve("sol2f");

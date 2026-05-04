@@ -3,23 +3,16 @@ package com.sol2f.server;
 import java.util.ArrayList;
 import java.util.Set;
 
-import javax.swing.text.html.parser.Entity;
-
 import com.sol2f.SpiceOfLifeFabricFlavor;
 import com.sol2f.interfaces.IEntityDataSaver;
+import com.sol2f.module.HealthModule;
+import com.sol2f.module.HungerModule;
 import com.sol2f.config.Sol2FConfig;
-import com.sol2f.data.PlayerFoodData;
 import com.sol2f.network.NetWorkHandler;
 import com.sol2f.network.payload.*;
-import com.sol2f.handler.HungerHandler;
-import com.sol2f.handler.HealthHandler;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.task.SleepTask;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.server.world.SleepManager;
-import net.minecraft.util.math.BlockPos;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -34,15 +27,15 @@ public class ServerEvents {
             if (player == null) return;
 
             // 获取并应用已消耗的食物列表
-            Set<String> eaten = PlayerFoodData.getEatenFoods(player);
-            HealthHandler.applyHealthModifier(player, eaten);
+            Set<String> eaten = HealthModule.getEatenFoods(player);
+            HealthModule.applyHealthModifier(player, eaten);
             NetWorkHandler.SyncConsumedFoodToClient(player, eaten);
-            NetWorkHandler.SyncFoodDataToClient(player, eaten, HealthHandler.calculateTheoreticalMaxHealthBonus());// 同步食物for部分客户端GUI显示
+            NetWorkHandler.SyncFoodDataToClient(player, eaten, HealthModule.calculateTheoreticalMaxHealthBonus());// 同步食物for部分客户端GUI显示
         });
 
         ServerPlayNetworking.registerGlobalReceiver(C2SRequestAllFoodListPayload.PACKET_ID, (payload, context) -> {
             ServerPlayerEntity player = context.player();
-            ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(HealthHandler.getAllFoods())));
+            ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(HealthModule.getAllFoods())));
         });
 
         // 复制逻辑
@@ -54,6 +47,7 @@ public class ServerEvents {
                     // 复制持久化数据
                     newDataSaver.getPersistentData().copyFrom(olDataSaver.getPersistentData());
                 }
+                HealthModule.applyHealthModifier(newPlayer);
             }
         });
 
@@ -62,11 +56,11 @@ public class ServerEvents {
             if(!alive) {
                 if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().health.resetOnDeath) {
                     // 重置已消耗的食物列表
-                    HealthHandler.clearEatenFoods(newPlayer);
+                    HealthModule.cleanEatenFoods(newPlayer);
                 } else {
                     // 复制旧玩家的已消耗食物列表到新玩家
-                    Set<String> eaten = PlayerFoodData.getEatenFoods(newPlayer);
-                    HealthHandler.applyHealthModifier(newPlayer, eaten);
+                    Set<String> eaten = HealthModule.getEatenFoods(newPlayer);
+                    HealthModule.applyHealthModifier(newPlayer, eaten);
                     NetWorkHandler.SyncConsumedFoodToClient(newPlayer, eaten);
                     
                 }
@@ -78,7 +72,7 @@ public class ServerEvents {
         ServerPlayNetworking.registerGlobalReceiver(C2SRequestFoodListPayload.PACKET_ID, (payload, context) -> {
             try {
                 ServerPlayerEntity player = context.player();
-                Set<String> eaten = PlayerFoodData.getEatenFoods(player);
+                Set<String> eaten = HealthModule.getEatenFoods(player);
                 NetWorkHandler.SyncConsumedFoodToClient(player, eaten);
             } catch (Exception e) {
                 SpiceOfLifeFabricFlavor.LOGGER.error("sol2f.ServerEvents.respondToClientListRequest | error responding to client list request", e);
@@ -102,6 +96,7 @@ public class ServerEvents {
         });
 
         EntitySleepEvents.START_SLEEPING.register((entity, sleepingPos) -> {
+            Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
             if (entity instanceof ServerPlayerEntity player) {
                 long TimeOfDay = player.getWorld().getTimeOfDay();
                 int NormalizedStartTick = (int) (TimeOfDay % 24000);
@@ -109,13 +104,14 @@ public class ServerEvents {
                 IEntityDataSaver accessor = (IEntityDataSaver) player;
                 accessor.setSleepStartTick(NormalizedStartTick);
 
-                if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().health.developerMode) {
+                if (config.dev.DeveloperMode) {
                     SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.ServerEvents.onPlayerSleep | Sleep started at world time: {}", NormalizedStartTick);
                 }
             }
         });
 
         EntitySleepEvents.STOP_SLEEPING.register((entity, sleepingPos) -> {
+            Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
             if (entity instanceof ServerPlayerEntity player) {
                 long TimeOfDay = player.getWorld().getTimeOfDay();
                 int NormalizedEndTick = (int) (TimeOfDay % 24000);
@@ -134,28 +130,29 @@ public class ServerEvents {
                     sleepDuration = NormalizedEndTick - StartTick;
                 }
 
-                if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().health.developerMode) {
+                if (config.dev.DeveloperMode) {
                     SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.ServerEvents.onPlayerSleep | Sleep stopped at world time: {}, calculated sleep duration: {} ticks", NormalizedEndTick, sleepDuration);
                 }
 
-                HungerHandler.PlayerSleepHungerHandler(player, sleepDuration);
+                HungerModule.PlayerSleepHungerHandler(player, sleepDuration);
             }
-        });    }
+        });
+    }
 
     private static void processHungerTick(ServerPlayerEntity player, int period) {
         Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
         IEntityDataSaver accessor = (IEntityDataSaver) player;
         if (accessor.getHungerTickCounter() >= period) {
-            if (config.health.developerMode) {
+            if (config.dev.DeveloperMode) {
                 SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.ServerEvents.processHungerTick | Hunger tick counter / period : " + accessor.getHungerTickCounter() + " / " + period);
             }
 
             accessor.resetHungerTickCounter();
-            if (config.health.developerMode) {
+            if (config.dev.DeveloperMode) {
                 SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.ServerEvents.processHungerTick | Hunger tick counter reset");
             }
 
-            HungerHandler.PlayerNaturalHungerHandler(player);
+            HungerModule.PlayerNaturalHungerHandler(player);
         } else {
             accessor.increaseHungerTickCounter();
         }
