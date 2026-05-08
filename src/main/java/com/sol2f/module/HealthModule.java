@@ -30,7 +30,7 @@ public class HealthModule {
 
     public static void onFoodEaten(ServerPlayerEntity serverPlayer, ItemStack stack) {
         Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
-        if (!CommonTools.isFoodItem(stack))
+        if (!Util.isFoodItem(stack))
             return;
 
         // 黑名单检查
@@ -117,7 +117,7 @@ public class HealthModule {
 
             // 计算函数
             String Formula = config.health.Expression;
-            double Result = CommonTools.evaluate(Formula, Map.of("uniqueFoods", (double) unique));
+            double Result = Util.evaluate(Formula, Map.of("uniqueFoods", (double) unique));
 
             double HealthBonus = BaseBonus + Result;// 计算总生命值奖励
 
@@ -156,7 +156,7 @@ public class HealthModule {
         try {
             Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
             Set<String> foods = Registries.ITEM.stream()
-                    .filter(item -> CommonTools.isFoodItem(item))
+                    .filter(item -> Util.isFoodItem(item))
                     .map(item -> Registries.ITEM.getId(item).toString())
                     .filter(itemId -> !config.health.BlackList.contains(itemId))
                     .collect(Collectors.toSet());
@@ -184,7 +184,7 @@ public class HealthModule {
             String formula = config.health.Expression;
             double functionBonus = 0;
             if (!"0".equals(formula)) {
-                functionBonus = CommonTools.evaluate(formula, Map.of("uniqueFoods", (double) totalFoods));
+                functionBonus = Util.evaluate(formula, Map.of("uniqueFoods", (double) totalFoods));
             }
             
             double totalBonus = baseBonus + functionBonus;
@@ -231,7 +231,7 @@ public class HealthModule {
 
     public static Set<String> getEatenFoods(ServerPlayerEntity player) {
         try {
-            NbtCompound persistent = CommonTools.readPersistentCompound(player);
+            NbtCompound persistent = Util.readPersistentCompound(player);
             NbtList consumed = persistent.contains(CONSUMED_KEY, 9) ? persistent.getList(CONSUMED_KEY, 8)
                     : new NbtList();
             Set<String> set = new HashSet<>();
@@ -246,7 +246,7 @@ public class HealthModule {
 
     public static void saveEatenFoods(ServerPlayerEntity player, Set<String> eatenFoods) {
         try {
-            NbtCompound persistent = CommonTools.readPersistentCompound(player);
+            NbtCompound persistent = Util.readPersistentCompound(player);
             SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HealthModule.saveEatenFoods | before save for player {} persistent contains: {}",
                     player.getName().getString(),
                     persistent.contains(CONSUMED_KEY, 9) ? persistent.getList(CONSUMED_KEY, 8) : "<none>");
@@ -256,10 +256,10 @@ public class HealthModule {
             }
             persistent.put(CONSUMED_KEY, newList);
             persistent.putInt(DATA_VERSION, CURRENT_VERSION);
-            CommonTools.writePersistentCompound(player, persistent);
+            Util.writePersistentCompound(player, persistent);
             // 读回并记录权威持久化内容
             try {
-                NbtCompound after = CommonTools.readPersistentCompound(player);
+                NbtCompound after = Util.readPersistentCompound(player);
                 SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HealthModule.saveEatenFoods | after save for player {} persistent contains: {}",
                         player.getName().getString(),
                         after.contains(CONSUMED_KEY, 9) ? after.getList(CONSUMED_KEY, 8) : "<none>");

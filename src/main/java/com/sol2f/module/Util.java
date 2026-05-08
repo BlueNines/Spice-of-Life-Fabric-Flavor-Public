@@ -14,7 +14,7 @@ import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import net.objecthunter.exp4j.function.Function;
 
-public class CommonTools {
+public class Util {
     /**
      * 读取玩家的持久化 NBT 数据
      * 

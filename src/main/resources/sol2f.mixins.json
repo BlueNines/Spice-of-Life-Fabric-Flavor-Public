@@ -3,9 +3,8 @@
 	"package": "com.sol2f.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ItemFinishMixin",
-		"PlayerEntityMixin",
-		"PlayerEatMixin"
+		"ItemStackFinishMixin",
+		"PlayerEntityMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

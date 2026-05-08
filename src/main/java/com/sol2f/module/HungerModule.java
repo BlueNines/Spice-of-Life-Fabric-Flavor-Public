@@ -17,7 +17,7 @@ public class HungerModule {
             Map<String, Double> vars = GetAdvancedPlayerStateVariables(player);
             int FoodLevel = vars.get("FoodLevel").intValue();
             String Formula = config.hunger.NaturalHungerExpression;
-            double Result = CommonTools.evaluate(Formula, vars);
+            double Result = Util.evaluate(Formula, vars);
 
             if (FoodLevel <= config.hunger.MinFoodLevel) {
                 if (config.dev.DeveloperMode) {
@@ -44,7 +44,7 @@ public class HungerModule {
                 String Formula = config.hunger.SleepHungerExpression;
                 Map<String, Double> vars = GetAdvancedPlayerStateVariables(player);
                 vars.put("SleepDuration", (double) SleepDuration);
-                double Result = CommonTools.evaluate(Formula, vars);
+                double Result = Util.evaluate(Formula, vars);
 
                 if (FoodLevel <= config.hunger.MinFoodLevel) {
                     if (config.dev.DeveloperMode) {
