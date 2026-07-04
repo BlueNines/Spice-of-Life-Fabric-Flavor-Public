@@ -30,6 +30,7 @@ public class SpiceOfLifeFabricFlavorClient implements ClientModInitializer {
     private static int CurrentHealth = 0;
     private static int MaxHealth = 240;
     private static volatile boolean allFoodsReceived = false;
+    private static volatile boolean whitelistEnabled = false;
 
     @Override
     public void onInitializeClient() {
@@ -38,7 +39,7 @@ public class SpiceOfLifeFabricFlavorClient implements ClientModInitializer {
         AutoConfig.register(SOL2FClientConfig.class, GsonConfigSerializer::new);
 
         // 注册网络包接收器
-        ClientPlayNetworking.registerGlobalReceiver(S2CFoodListPayload.PACKET_ID, (payload, context) -> {// 接收已食用食物列表
+        ClientPlayNetworking.registerGlobalReceiver(S2CEatenFoodListPayload.PACKET_ID, (payload, context) -> {// 接收已食用食物列表
             List<String> list = payload.foods();
             synchronized (consumed) {
                 consumed.clear();

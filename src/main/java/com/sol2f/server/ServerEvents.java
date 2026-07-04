@@ -30,7 +30,7 @@ public class ServerEvents {
             Set<String> eaten = HealthModule.getEatenFoods(player);
             HealthModule.applyHealthModifier(player, eaten);
             NetWorkHandler.SyncConsumedFoodToClient(player, eaten);
-            NetWorkHandler.SyncFoodDataToClient(player, eaten, HealthModule.calculateTheoreticalMaxHealthBonus());// 同步食物for部分客户端GUI显示
+            NetWorkHandler.SyncFoodDataToClient(player, HealthModule.calculateTheoreticalMaxHealthBonus());// 同步食物for部分客户端GUI显示
         });
 
         ServerPlayNetworking.registerGlobalReceiver(C2SRequestAllFoodListPayload.PACKET_ID, (payload, context) -> {

@@ -41,6 +41,14 @@ public class HealthModule {
             }
             return;
         }
+
+        // 白名单检查
+        if (!config.health.WhiteList.isEmpty() && !config.health.WhiteList.contains(itemId)) {
+            if (config.dev.DeveloperMode) {
+                SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HealthUseHandler.onFoodEaten | Item {} is not in whitelist, ignoring", itemId);
+            }
+            return;
+        }
         if (serverPlayer == null) {
             SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: onFoodEaten called with null player");
             return;
@@ -159,6 +167,7 @@ public class HealthModule {
                     .filter(item -> Util.isFoodItem(item))
                     .map(item -> Registries.ITEM.getId(item).toString())
                     .filter(itemId -> !config.health.BlackList.contains(itemId))
+                    .filter(itemId -> config.health.WhiteList.isEmpty() || config.health.WhiteList.contains(itemId))
                     .collect(Collectors.toSet());
             
             if (config.dev.DeveloperMode) {
@@ -191,6 +200,12 @@ public class HealthModule {
 
             // 与配置的最大增益值比较
             double maxBonusAllowed = config.health.maxHealth;
+            // 白名单不为空时，额外受白名单本身条目数限制
+            if (!config.health.WhiteList.isEmpty()) {
+                double whitelistExpr = "0".equals(formula) ? 0 : Util.evaluate(formula, Map.of("uniqueFoods", (double) config.health.WhiteList.size()));
+                double whitelistCap = config.health.WhiteList.size() * perHp + whitelistExpr;
+                maxBonusAllowed = Math.min(maxBonusAllowed, whitelistCap);
+            }
             double finalBonus = Math.min(totalBonus, maxBonusAllowed);
             
             if (config.dev.DeveloperMode) {

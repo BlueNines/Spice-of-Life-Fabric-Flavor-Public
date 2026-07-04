@@ -28,6 +28,8 @@ public class Sol2FConfig implements ConfigData {
             "minecraft:rotten_flesh",
             "minecraft:spider_eye"
         );
+
+        public List<String> WhiteList = Arrays.asList();
     }
 
     public static class HungerSetting {

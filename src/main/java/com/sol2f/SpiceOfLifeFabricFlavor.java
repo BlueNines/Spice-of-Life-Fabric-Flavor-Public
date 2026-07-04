@@ -78,7 +78,7 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
         }
 
 		// 注册payload,事件,命令,物品
-		PayloadTypeRegistry.playS2C().register(S2CFoodListPayload.PACKET_ID, S2CFoodListPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(S2CEatenFoodListPayload.PACKET_ID, S2CEatenFoodListPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(S2CAllFoodListPayload.PACKET_ID, S2CAllFoodListPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(S2CHealthPayload.PACKET_ID, S2CHealthPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(S2CHealthMaxPayload.PACKET_ID, S2CHealthMaxPayload.CODEC);

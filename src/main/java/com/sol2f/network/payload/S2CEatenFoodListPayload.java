@@ -9,10 +9,10 @@ import net.minecraft.util.Identifier;
 import java.util.List;
 
 
-public record S2CFoodListPayload(List<String> foods) implements CustomPayload {
+public record S2CEatenFoodListPayload(List<String> foods) implements CustomPayload {
     public static final Identifier ID = Identifier.of("sol2f", "s2c_food_list");
-    public static final CustomPayload.Id<S2CFoodListPayload> PACKET_ID = new CustomPayload.Id<>(ID);
-    public static final PacketCodec<PacketByteBuf, S2CFoodListPayload> CODEC = PacketCodec.tuple(PacketCodecs.STRING.collect(PacketCodecs.toList()), S2CFoodListPayload::foods, S2CFoodListPayload::new);
+    public static final CustomPayload.Id<S2CEatenFoodListPayload> PACKET_ID = new CustomPayload.Id<>(ID);
+    public static final PacketCodec<PacketByteBuf, S2CEatenFoodListPayload> CODEC = PacketCodec.tuple(PacketCodecs.STRING.collect(PacketCodecs.toList()), S2CEatenFoodListPayload::foods, S2CEatenFoodListPayload::new);
 
     @Override
     public CustomPayload.Id<? extends CustomPayload> getId() {

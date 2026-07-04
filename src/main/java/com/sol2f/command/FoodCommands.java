@@ -4,7 +4,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.sol2f.SpiceOfLifeFabricFlavor;
 import com.sol2f.module.HealthModule;
 import com.sol2f.network.payload.S2CAllFoodListPayload;
-import com.sol2f.network.payload.S2CFoodListPayload;
+import com.sol2f.network.payload.S2CEatenFoodListPayload;
 import com.sol2f.network.payload.S2CHealthPayload;
 import com.sol2f.network.payload.S2CHealthMaxPayload;
 
@@ -133,7 +133,8 @@ public class FoodCommands {
                 case "playerdata":
                     // 同步玩家数据
                     Set<String> eatenFoods = HealthModule.getEatenFoods(player);
-                    ServerPlayNetworking.send(player, new S2CFoodListPayload(new ArrayList<>(eatenFoods)));
+                    eatenFoods.retainAll(HealthModule.getAllFoods());
+                    ServerPlayNetworking.send(player, new S2CEatenFoodListPayload(new ArrayList<>(eatenFoods)));
 
                     source.sendFeedback(() -> Text.translatable("sol2f.commands.sync.playerdata.success"), false);
                     break;
@@ -141,9 +142,11 @@ public class FoodCommands {
                 case "both":
                 default:
                     // 同步所有数据
-                    ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(HealthModule.getAllFoods())));
+                    Set<String> bothAllFoods = HealthModule.getAllFoods();
+                    ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(bothAllFoods)));
                     Set<String> playerEaten = HealthModule.getEatenFoods(player);
-                    ServerPlayNetworking.send(player, new S2CFoodListPayload(new ArrayList<>(playerEaten)));
+                    playerEaten.retainAll(bothAllFoods);
+                    ServerPlayNetworking.send(player, new S2CEatenFoodListPayload(new ArrayList<>(playerEaten)));
                     ServerPlayNetworking.send(player, new S2CHealthPayload((int) player.getMaxHealth()));
                     int maxBonus = HealthModule.calculateTheoreticalMaxHealthBonus();
                     ServerPlayNetworking.send(player, new S2CHealthMaxPayload(maxBonus));

@@ -130,6 +130,20 @@ public class Sol2FConfigGUI {
             .build()
         );
 
+        healthCat.addEntry(
+            entryBuilder.startStrList(
+                Text.translatable("sol2f.gui.config.option.health.whitelist"),
+                Config.health.WhiteList
+            )
+            .setTooltip(
+                Text.translatable("sol2f.gui.config.option.health.whitelist.@Tooltip[1]"),
+                Text.translatable("sol2f.gui.config.option.health.whitelist.@Tooltip[2]"),
+                Text.translatable("sol2f.gui.config.option.health.whitelist.@Tooltip[3]")
+            )
+            .setSaveConsumer(v -> Config.health.WhiteList = v)
+            .build()
+        );
+
         // ===== 饥饿设置 =====
         ConfigCategory hungerCat = builder.getOrCreateCategory(
             Text.translatable("sol2f.gui.config.option.hunger")
