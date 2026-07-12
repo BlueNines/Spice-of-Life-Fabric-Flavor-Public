@@ -309,38 +309,6 @@
 
 </details>
 
-## 常见问题和许可声明
-
-### 总则
-
-本mod（Spice of Life: Fabric Flavor）默认状态下由作者保留所有权力。
-任何用户拥有自由的获取和使用mod的权利，任何机构或个人对mod的权利由以下细则约束。
-
-**关于在整合包和对外分发的Minecraft游戏（以下简称游戏）版本或基于游戏作品的二次创作（以下统称为整合包）、以及在公开的服务器或在线游戏（以下统称在线游戏）中引用本mod**
-
-本mod被允许在任何公开或私人分发的整合包、在线游戏中被引用。
-
-- 禁止使用整合包盈利或损害用户权利；
-- 不允许利用本mod进行任何直接或间接的商业化行为，包括但不限于：整合包或在线游戏客户端下载前需要打赏赞助、整合包或在线游戏客户端限制下载；
-- 不允许对未打赏或赞助或付费的用户限制玩法或用户权限；
-- 对于对外分发的整合包：必须提供**直接**且**无限制**的下载通道。
-
-**关于分发本mod和二次创作分发**
-
-分发是被允许的。二次创作中，mod的元数据和代码收到保护。
-
-- 分发任何原始版本或二次创作不允许付费下载、限制下载；
-- 任何分发原始版本和分发二次创作必须提供**直接**且**无限制**的下载通道，请标注modrinth页面链接。
-
-**关于二次创作（即基于本mod的任何版本进行任何形式的修改）**
-
-任何修改基于不修改mod元数据。
-
-- 如有需要，mod的本地化文件允许修改，但不允许在中文和英文的翻译中进行署名（例如“由xxx翻译”“由xxx优化”），其他语言的翻译允许社区贡献和署名。
-- 二次创作不允许修改mod元数据，你可以为mod增加额外本地化或修改GUI材质，为mod创作的额外材质包由其作者对所有内容负责，材质包作者对其材质包关于本mod的修改部分进行任何创作和本mod无关。
-
-*限制的定义：包括但不限于下载前看广告、下载需要积分或代币、下载需要登陆或用户分级和等级等。
-
 ## 依赖
 
 - [Mod Menu](https://modrinth.com/mod/modmenu) (v2.2.0+ 可选)配置页面入口
@@ -679,38 +647,6 @@ Craft the **"Food Book"** to open the food journal interface:
 ![food book](https://cdn.modrinth.com/data/cached_images/eb67b04a5cd10951c497e5d90ac9703d7a2415f7.png)
 
 </details>
-
-## Common Questions & Licensing
-
-### General Principles
-
-This mod (**Spice of Life: Fabric Flavor**) reserves all rights by default.
-Users have the freedom to obtain and use the mod. Rights for institutions or individuals are constrained by the following rules.
-
-**Regarding Use in Mod Packs and Public Servers**
-
-This mod is allowed to be included in any publicly or privately distributed mod packs and online games.
-
-- **No Profit from Mod**: Prohibited from profiting directly from the mod or infringing user rights.
-- **No Paywalls**: No direct or indirect commercialization is allowed. This includes requiring donations/sponsorships to download the mod pack or restricting downloads.
-- **No Gameplay Restrictions**: Cannot restrict gameplay features or permissions for users who have not donated/paid.
-- **Direct Access**: For distributed mod packs, a **direct** and **unrestricted** download channel must be provided.
-
-**Regarding Distribution and Derivative Works**
-
-Distribution is allowed. Metadata and code in derivative works are protected.
-
-- **No Paid Downloads**: Distributing original or modified versions cannot require payment or restrict downloads.
-- **Attribution**: Any distribution must provide a **direct** and **unrestricted** download channel and include a link to the Modrinth page.
-
-**Regarding Derivative Works (Modifications)**
-
-Any modification must not alter the mod's core metadata.
-
-- **Localization**: Localization files may be modified. However, attribution (e.g., "Translated by XXX") is **not allowed** in the Chinese and English translation files. Attribution is allowed for other community-contributed languages.
-- **Assets**: You may add extra localization or modify GUI textures. Extra texture packs created for this mod are the sole responsibility of their authors; such modifications are considered separate from the core mod.
-
-*Definition of Restrictions: Includes but is not limited to watching ads before download, requiring points/tokens, login requirements, or user tier restrictions.*
 
 ## Dependencies
 
