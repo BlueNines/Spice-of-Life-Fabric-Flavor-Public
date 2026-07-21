@@ -20,7 +20,7 @@ repositories {
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
     maven { url "https://maven.shedaniel.me/" }      // ClothConfig
-    maven { url "https://maven.terraformersmc.com/"}  // ModMenu
+    maven { url "https://maven.terraformersmc.com/releases/" }  // ModMenu
 	maven { url "https://maven.ryanliptak.com/" }    // AppleSkin
 }
 
