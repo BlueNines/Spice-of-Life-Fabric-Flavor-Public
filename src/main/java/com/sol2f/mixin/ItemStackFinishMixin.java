@@ -18,6 +18,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ItemStackFinishMixin {
     @Inject(method = "finishUsing(Lnet/minecraft/world/World;Lnet/minecraft/entity/LivingEntity;)Lnet/minecraft/item/ItemStack;", 
             at = @At("HEAD"))
+    /**
+     * 在服务端物品完成使用时只记录标准食物和真实玩家。
+     */
     private void onFinishUsing(net.minecraft.world.World world, LivingEntity consumer, CallbackInfoReturnable<ItemStack> cir) {
         try {
             // 基础安全检查链

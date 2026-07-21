@@ -14,11 +14,17 @@ public class SOL2FRightClickItem extends Item {// 创建物品一个类that可�
 
     private final BiConsumer<ServerPlayerEntity, ItemStack> onRightClick;
 
+    /**
+     * 创建带服务端右键回调的简单物品。
+     */
     public SOL2FRightClickItem(Settings settings, BiConsumer<ServerPlayerEntity, ItemStack> onRightClick) {
         super(settings);
         this.onRightClick = onRightClick;
     }
 
+    /**
+     * 在服务端玩家右键时执行回调并返回成功结果。
+     */
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
         if (!world.isClient && user instanceof ServerPlayerEntity serverPlayer) {

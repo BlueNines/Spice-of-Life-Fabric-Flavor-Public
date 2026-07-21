@@ -35,7 +35,7 @@ public record DatabaseSettings(
         if (config == null) {
             throw new IllegalArgumentException("Database config is missing");
         }
-        if (!config.jdbcUrl.startsWith("jdbc:mysql://")) {
+        if (config.jdbcUrl == null || !config.jdbcUrl.startsWith("jdbc:mysql://")) {
             throw new IllegalArgumentException("jdbcUrl must start with jdbc:mysql://");
         }
         validateId("syncGroup", config.syncGroup);

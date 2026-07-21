@@ -12,6 +12,9 @@ import net.minecraft.text.Text;
 
 public class Sol2FConfigGUI {
 
+    /**
+     * 创建并返回服务端功能配置页面。
+     */
     public static Screen openConfigScreen(Screen parent) {
         
         System.out.println("Sol2FConfigGUI: openConfigScreen called!");

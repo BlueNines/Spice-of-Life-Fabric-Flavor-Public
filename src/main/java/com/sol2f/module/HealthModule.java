@@ -33,10 +33,20 @@ public final class HealthModule {
     private static final String DATABASE_DIRTY_KEY = "database_dirty";
     private static final int CURRENT_VERSION = 2;
 
+    /**
+     * 工具类不允许实例化。
+     */
     private HealthModule() {
     }
 
+    /**
+     * 处理玩家完成食用后的首次发现、属性刷新和异步持久化。
+     */
     public static void onFoodEaten(ServerPlayerEntity serverPlayer, ItemStack stack) {
+        if (serverPlayer == null) {
+            SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: onFoodEaten called with null player");
+            return;
+        }
         Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
         if (!Util.isFoodItem(stack))
             return;
@@ -57,11 +67,6 @@ public final class HealthModule {
             }
             return;
         }
-        if (serverPlayer == null) {
-            SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: onFoodEaten called with null player");
-            return;
-        }
-
         String id = Registries.ITEM.getId(stack.getItem()).toString();
 
         // 在玩家上使用同步块以避免竞争条件，其中两个事件都在写入之前读取NBT，因此都发送首次食用消息
@@ -74,6 +79,12 @@ public final class HealthModule {
                 SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HealthUseHandler.onFoodEaten | before change player={} eaten={}", serverPlayer.getName().getString(), current);
             }
             if (!current.contains(id)) { // 食物未发现
+                if (current.size() >= NetworkChannels.MAX_FOOD_ENTRIES) {
+                    SpiceOfLifeFabricFlavor.LOGGER.warn(
+                            "Ignored new food {} for {} because the bounded food list is full",
+                            id, serverPlayer.getUuid());
+                    return;
+                }
                 current.add(id);
                 saveLocalEatenFoods(serverPlayer, current, true);
                 PlayerDataSyncService.recordFood(serverPlayer, id, current);
@@ -183,6 +194,9 @@ public final class HealthModule {
         player.setHealth(newHealth);
     }
 
+    /**
+     * 扫描本服注册表并返回通过黑白名单过滤的标准食物 ID。
+     */
     public static Set<String> getAllFoods() {
         try {
             Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
@@ -205,6 +219,9 @@ public final class HealthModule {
         }
     }
 
+    /**
+     * 计算当前本服全部有效食物可提供的理论最大生命增益。
+     */
     public static int calculateTheoreticalMaxHealthBonus() {
         Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
         try {
@@ -244,6 +261,9 @@ public final class HealthModule {
     }
 
     // 数据部分
+    /**
+     * 清空玩家本地食物记录并同步客户端属性。
+     */
     public static void cleanEatenFoods(ServerPlayerEntity player) {
         Set<String> empty = new HashSet<>();
         saveLocalEatenFoods(player, empty, true);
@@ -251,10 +271,16 @@ public final class HealthModule {
         NetWorkHandler.syncConsumedFoodToClient(player, empty);
     }
 
+    /**
+     * 兼容旧调用方，为玩家添加一项经过上限保护的食物记录。
+     */
     public static void addEatenFood(ServerPlayerEntity player, ItemStack food) {
         Set<String> eatenFoods = getEatenFoods(player);
         String foodId = Registries.ITEM.getId(food.getItem()).toString();
 
+        if (!Util.isFoodItem(food) || eatenFoods.size() >= NetworkChannels.MAX_FOOD_ENTRIES) {
+            return;
+        }
         if (eatenFoods.add(foodId)) {
             saveLocalEatenFoods(player, eatenFoods, true);
             PlayerDataSyncService.recordFood(player, foodId, eatenFoods);
@@ -283,8 +309,13 @@ public final class HealthModule {
             NbtList consumed = persistent.contains(CONSUMED_KEY, 9) ? persistent.getList(CONSUMED_KEY, 8)
                     : new NbtList();
             Set<String> set = new HashSet<>();
-            for (int i = 0; i < consumed.size(); i++)
-                set.add(consumed.getString(i));
+            int limit = Math.min(consumed.size(), NetworkChannels.MAX_FOOD_ENTRIES);
+            for (int i = 0; i < limit; i++) {
+                String food = consumed.getString(i);
+                if (!food.isBlank() && food.length() <= NetworkChannels.MAX_FOOD_ID_LENGTH) {
+                    set.add(food);
+                }
+            }
             return set;
         } catch (Exception e) {
             SpiceOfLifeFabricFlavor.LOGGER.error("sol2f.HealthModule.getEatenFoods | failed to get eaten foods", e);
@@ -303,6 +334,9 @@ public final class HealthModule {
             for (String food : eatenFoods) {
                 if (written >= NetworkChannels.MAX_FOOD_ENTRIES) {
                     break;
+                }
+                if (food == null || food.isBlank() || food.length() > NetworkChannels.MAX_FOOD_ID_LENGTH) {
+                    continue;
                 }
                 newList.add(NbtString.of(food));
                 written++;

@@ -23,6 +23,9 @@ public final class NetworkChannels {
     public static final Identifier C2S_REQUEST_FOOD_LIST = new Identifier("sol2f", "c2s_request_food_list");
     public static final Identifier C2S_REQUEST_ALL_FOOD_LIST = new Identifier("sol2f", "c2s_request_all_food_list");
 
+    /**
+     * 工具类不允许实例化。
+     */
     private NetworkChannels() {
     }
 
@@ -63,6 +66,9 @@ public final class NetworkChannels {
         List<String> foods = new ArrayList<>(size);
         for (int index = 0; index < size; index++) {
             foods.add(buffer.readString(MAX_FOOD_ID_LENGTH));
+        }
+        if (buffer.readableBytes() != 0) {
+            throw new IllegalArgumentException("Unexpected trailing food-list payload bytes: " + buffer.readableBytes());
         }
         return foods;
     }

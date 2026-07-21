@@ -21,6 +21,9 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 
 public class ServerEvents {
+    /**
+     * 注册登录、离线、网络、重生、睡眠和服务器 tick 事件。
+     */
     public static void register() {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {// 玩家加入时
             ServerPlayerEntity player = handler.player;// 获取玩家实例
@@ -166,6 +169,9 @@ public class ServerEvents {
         });
     }
 
+    /**
+     * 按配置周期推进单个玩家的自然饥饿计数。
+     */
     private static void processHungerTick(ServerPlayerEntity player, int period) {
         Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
         IEntityDataSaver accessor = (IEntityDataSaver) player;

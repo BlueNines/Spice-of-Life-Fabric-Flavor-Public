@@ -3,10 +3,15 @@ package com.sol2f.sync;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.sol2f.network.NetworkChannels;
+
 /**
  * 提供不依赖 Minecraft 对象的玩家食物集合合并规则。
  */
 public final class PlayerFoodMerge {
+    /**
+     * 工具类不允许实例化。
+     */
     private PlayerFoodMerge() {
     }
 
@@ -21,17 +26,32 @@ public final class PlayerFoodMerge {
             long loginGeneration,
             boolean loginDirty,
             Set<String> pendingFoods) {
-        Set<String> merged = new HashSet<>(databaseFoods);
+        Set<String> merged = new HashSet<>();
+        addBounded(merged, databaseFoods);
         boolean importLegacy = firstSuccessfulLoad && loginGeneration < 0L && databaseGeneration == 0L;
         boolean restoreDirty = loginDirty && loginGeneration == databaseGeneration;
         if (importLegacy || restoreDirty) {
-            merged.addAll(loginFoods);
+            addBounded(merged, loginFoods);
         }
-        merged.addAll(pendingFoods);
+        addBounded(merged, pendingFoods);
 
         Set<String> missingFromDatabase = new HashSet<>(merged);
         missingFromDatabase.removeAll(databaseFoods);
         return new MergeResult(merged, missingFromDatabase);
+    }
+
+    /**
+     * 按统一上限向目标集合追加食物 ID，避免迁移或异常数据无限扩张。
+     */
+    private static void addBounded(Set<String> target, Set<String> source) {
+        for (String food : source) {
+            if (target.size() >= NetworkChannels.MAX_FOOD_ENTRIES) {
+                return;
+            }
+            if (food != null && !food.isBlank() && food.length() <= NetworkChannels.MAX_FOOD_ID_LENGTH) {
+                target.add(food);
+            }
+        }
     }
 
     /**

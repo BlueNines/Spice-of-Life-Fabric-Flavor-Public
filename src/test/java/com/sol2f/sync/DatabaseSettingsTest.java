@@ -53,4 +53,15 @@ class DatabaseSettingsTest {
 
         org.junit.jupiter.api.Assertions.assertFalse(settings.toString().contains(config.password));
     }
+
+    /**
+     * 缺失 JDBC 地址时应返回可读配置错误而不是空指针异常。
+     */
+    @Test
+    void rejectsMissingJdbcUrl() {
+        Sol2FDatabaseConfig config = new Sol2FDatabaseConfig();
+        config.jdbcUrl = null;
+
+        assertThrows(IllegalArgumentException.class, () -> DatabaseSettings.from(config));
+    }
 }

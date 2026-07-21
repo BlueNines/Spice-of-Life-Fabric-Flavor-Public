@@ -35,4 +35,15 @@ class NetworkChannelsTest {
 
         assertThrows(IllegalArgumentException.class, () -> NetworkChannels.readFoodList(buffer));
     }
+
+    /**
+     * 合法列表后附加的多余载荷必须被拒绝。
+     */
+    @Test
+    void rejectsTrailingPayloadBytes() {
+        PacketByteBuf buffer = NetworkChannels.writeFoodList(List.of("minecraft:apple"));
+        buffer.writeByte(1);
+
+        assertThrows(IllegalArgumentException.class, () -> NetworkChannels.readFoodList(buffer));
+    }
 }

@@ -32,6 +32,9 @@ public class SpiceOfLifeFabricFlavorClient implements ClientModInitializer {
     private static int MaxHealth = 240;
     private static volatile boolean allFoodsReceived = false;
 
+    /**
+     * 注册客户端配置、网络接收器、Tooltip、快捷键和连接事件。
+     */
     @Override
     public void onInitializeClient() {
 
@@ -127,31 +130,48 @@ public class SpiceOfLifeFabricFlavorClient implements ClientModInitializer {
         }
     }
 
-    // 公共访问方法（不变）
+    /**
+     * 返回当前服务端同步的生命增益。
+     */
     public static int getCurrentHealth() {
         return CurrentHealth;
     }
 
+    /**
+     * 返回当前服务端同步的理论最大生命增益。
+     */
     public static int getMaxHealth() {
         return MaxHealth;
     }
 
+    /**
+     * 返回客户端已发现食物数量。
+     */
     public static int getConsumedCount() {
         synchronized (consumed) {
             return consumed.size();
         }
     }
 
+    /**
+     * 返回本服可发现食物数量。
+     */
     public static int getAllCount() {
         synchronized (allFoods) {
             return allFoods.size();
         }
     }
 
+    /**
+     * 判断指定食物是否已经发现。
+     */
     public static boolean isConsumed(String id) {
         return consumed.contains(id);
     }
 
+    /**
+     * 返回已发现食物的独立快照。
+     */
     public static List<String> getConsumedSnapshot() {
         synchronized (consumed) {
             return new ArrayList<>(consumed);

@@ -22,6 +22,9 @@ import static net.minecraft.server.command.CommandManager.literal;
 public class FoodCommands {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    /**
+     * 注册 sol2f 管理、查询和客户端同步命令。
+     */
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(literal("sol2f")
@@ -93,6 +96,9 @@ public class FoodCommands {
         });
     }
 
+    /**
+     * 输出目标玩家当前已食用食物快照。
+     */
     private static int executeGetList(ServerCommandSource source, String playerName) {
         ServerPlayerEntity target;
 
@@ -125,6 +131,9 @@ public class FoodCommands {
         return 1;
     }
     
+    /**
+     * 按指定范围重新发送客户端显示数据。
+     */
     private static int executeSync(ServerCommandSource source, String syncType) {
         ServerPlayerEntity player = source.getPlayer();
         if (player == null) {

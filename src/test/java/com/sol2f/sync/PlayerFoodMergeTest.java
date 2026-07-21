@@ -2,6 +2,7 @@ package com.sol2f.sync;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -97,5 +98,47 @@ class PlayerFoodMergeTest {
 
         assertEquals(Set.of("minecraft:apple"), result.foods());
         assertEquals(Set.of("minecraft:apple"), result.missingFromDatabase());
+    }
+
+    /**
+     * 异常迁移数据和集合并集必须受统一数量上限保护。
+     */
+    @Test
+    void boundsMergedFoodCount() {
+        Set<String> databaseFoods = new LinkedHashSet<>();
+        for (int index = 0; index < com.sol2f.network.NetworkChannels.MAX_FOOD_ENTRIES; index++) {
+            databaseFoods.add("test:food_" + index);
+        }
+
+        PlayerFoodMerge.MergeResult result = PlayerFoodMerge.merge(
+                databaseFoods,
+                0L,
+                true,
+                Set.of("test:legacy_extra"),
+                -1L,
+                false,
+                Set.of("test:pending_extra"));
+
+        assertEquals(com.sol2f.network.NetworkChannels.MAX_FOOD_ENTRIES, result.foods().size());
+        assertEquals(Set.of(), result.missingFromDatabase());
+    }
+
+    /**
+     * 空白和超长食物 ID 不应进入在线合并结果。
+     */
+    @Test
+    void rejectsInvalidFoodIdsDuringMerge() {
+        String oversized = "x".repeat(com.sol2f.network.NetworkChannels.MAX_FOOD_ID_LENGTH + 1);
+
+        PlayerFoodMerge.MergeResult result = PlayerFoodMerge.merge(
+                Set.of("minecraft:apple", " ", oversized),
+                0L,
+                true,
+                Set.of(),
+                -1L,
+                false,
+                Set.of());
+
+        assertEquals(Set.of("minecraft:apple"), result.foods());
     }
 }

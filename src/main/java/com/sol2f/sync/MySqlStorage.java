@@ -123,6 +123,10 @@ public final class MySqlStorage implements AutoCloseable {
                 if (count >= com.sol2f.network.NetworkChannels.MAX_FOOD_ENTRIES) {
                     break;
                 }
+                if (food == null || food.isBlank()
+                        || food.length() > com.sol2f.network.NetworkChannels.MAX_FOOD_ID_LENGTH) {
+                    continue;
+                }
                 statement.setString(1, settings.syncGroup());
                 statement.setString(2, playerUuid.toString());
                 statement.setLong(3, generation);

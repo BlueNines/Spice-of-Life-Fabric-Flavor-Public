@@ -36,6 +36,9 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
         }
     );
 
+    /**
+     * 注册配置、事件、命令和食物簿物品。
+     */
     @Override
     public void onInitialize() {
         LOGGER.info("SpiceOfLife: initializing");
@@ -86,6 +89,9 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
         LOGGER.info("SpiceOfLife: initialized");
     }
 
+    /**
+     * 写入兼容旧调用方的开发诊断日志。
+     */
 	public static void writeDevLog(String fmt, Object... args) {
 		LOGGER.info(fmt.replace("{}", "%s"), args);
 	}

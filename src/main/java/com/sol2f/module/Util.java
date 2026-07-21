@@ -68,6 +68,7 @@ public class Util {
 
     // 函数计算器部分
     public static final Function FLOOR = new Function("floor", 1) {// 定义向下取整函数
+        /** 计算向下取整。 */
         @Override
         public double apply(double... args) {
             return Math.floor(args[0]);
@@ -75,6 +76,7 @@ public class Util {
     };
 
     public static final Function CEIL = new Function("ceil", 1) {// 定义向上取整函数
+        /** 计算向上取整。 */
         @Override
         public double apply(double... args) {
             return Math.ceil(args[0]);
@@ -82,6 +84,7 @@ public class Util {
     };
 
     public static final Function ROUND = new Function("round", 1) {// 定义四舍五入函数
+        /** 计算四舍五入。 */
         @Override
         public double apply(double... args) {
             return Math.round(args[0]);
@@ -89,6 +92,7 @@ public class Util {
     };
 
     public static final Function MIN = new Function("min", 2) {// 定义取最小值函数
+        /** 返回两个参数中的较小值。 */
         @Override
         public double apply(double... args) {
             return Math.min(args[0], args[1]);
@@ -96,6 +100,7 @@ public class Util {
     };
 
     public static final Function MAX = new Function("max", 2) {// 定义取最大值函数
+        /** 返回两个参数中的较大值。 */
         @Override
         public double apply(double... args) {
             return Math.max(args[0], args[1]);
@@ -103,6 +108,7 @@ public class Util {
     };
 
     public static final Function POW = new Function("pow", 2) {// 定义幂函数
+        /** 计算幂。 */
         @Override
         public double apply(double... args) {
             return Math.pow(args[0], args[1]);
@@ -110,6 +116,7 @@ public class Util {
     };
 
     public static final Function LOG = new Function("log", 2) {// 定义对数函数
+        /** 计算指定底数的对数。 */
         @Override
         public double apply(double... args) {
             return Math.log(args[1]) / Math.log(args[0]);
@@ -117,6 +124,7 @@ public class Util {
     };
 
     public static final Function IF = new Function("if", 3) {// 定义条件判断函数
+        /** 根据首个参数选择返回值。 */
         @Override
         public double apply(double... args) {
             return args[0] > 0 ? args[1] : args[2];
@@ -124,6 +132,7 @@ public class Util {
     };
 
     public static final Function OR = new Function("or", 2) {// 定义或函数
+        /** 计算逻辑或。 */
         @Override
         public double apply(double... args) {
             return args[0] > 0 || args[1] > 0 ? 1 : 0;
@@ -131,6 +140,7 @@ public class Util {
     };
 
     public static final Function AND = new Function("and", 2) {// 定义与函数
+        /** 计算逻辑与。 */
         @Override
         public double apply(double... args) {
             return args[0] > 0 && args[1] > 0 ? 1 : 0;
@@ -138,6 +148,7 @@ public class Util {
     };
 
     public static final Function NOT = new Function("not", 1) {// 定义非函数
+        /** 计算逻辑非。 */
         @Override
         public double apply(double... args) {
             return args[0] > 0 ? 0 : 1;
@@ -145,13 +156,15 @@ public class Util {
     };
 
     public static final Function LT = new Function("lt", 2) {// 定义lessthan函数，返回0或1
-    @Override
+        /** 判断首个参数是否小于第二个参数。 */
+        @Override
         public double apply(double... args) {
             return args[0] < args[1] ? 1 : 0;
         }
     };
 
     public static final Function GT = new Function("gt", 2) {// 定义greaterthan函数，返回0或1
+        /** 判断首个参数是否大于第二个参数。 */
         @Override
         public double apply(double... args) {
             return args[0] > args[1] ? 1 : 0;
@@ -159,6 +172,7 @@ public class Util {
     };
 
     public static final Function EQ = new Function("eq", 2) {// 定义equals函数，返回0或1
+        /** 判断两个参数是否相等。 */
         @Override
         public double apply(double... args) {
             return args[0] == args[1] ? 1 : 0;
@@ -166,6 +180,7 @@ public class Util {
     };
 
     public static final Function NEQ = new Function("neq", 2) {// 定义not equals函数，返回0或1
+        /** 判断两个参数是否不相等。 */
         @Override
         public double apply(double... args) {
             return args[0] != args[1] ? 1 : 0;
@@ -174,6 +189,9 @@ public class Util {
 
     public static final Function[] CUSTOM_FUNCTIONS = { FLOOR, CEIL, ROUND, MIN, MAX, POW, LOG, IF, OR, AND, NOT, LT, GT, EQ, NEQ };
 
+    /**
+     * 编译带自定义函数的表达式。
+     */
     public static Expression buildExpression(String exprStr, String... variables) {
         if (exprStr == null || exprStr.trim().isEmpty()) {
             throw new IllegalArgumentException("Expression string cannot be null or empty");
@@ -189,6 +207,9 @@ public class Util {
     }
 
 
+    /**
+     * 使用给定变量计算表达式结果。
+     */
     public static double evaluate(String expressionStr, Map<String, Double> variables) {
         if (expressionStr == null || expressionStr.trim().isEmpty()) {
             throw new IllegalArgumentException("Expression string cannot be null or empty");

@@ -16,6 +16,9 @@ import com.sol2f.SpiceOfLifeFabricFlavorClient;
 
 public class FoodBookScreen extends Screen {
 
+    /**
+     * 创建已发现食物列表页面。
+     */
     public FoodBookScreen() {
         super(Text.translatable("sol2f.gui.food_book.title"));
     }
@@ -29,11 +32,17 @@ public class FoodBookScreen extends Screen {
     private static final int ITEMS_PER_PAGE = 96;
     private ItemStack hoveredStack = ItemStack.EMPTY;
 
+    /**
+     * 食物簿在单人或多人游戏中都不暂停世界。
+     */
     @Override
     public boolean shouldPause() {
         return false;
     }
 
+    /**
+     * 绘制食物簿背景、列表、滚动条和导航按钮。
+     */
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         // 首先渲染背景（必须是第一行！）
@@ -84,6 +93,9 @@ public class FoodBookScreen extends Screen {
             context.drawTooltip(textRenderer, tooltip, mouseX, mouseY);
         }
     }
+    /**
+     * 绘制当前滚动范围内的食物格子和 Tooltip。
+     */
     private void renderItemGrid(DrawContext context, int guiLeft, int guiTop, int mouseX, int mouseY) {
         int totalItem = SpiceOfLifeFabricFlavorClient.getConsumedCount();
         List<String> consumedItems = SpiceOfLifeFabricFlavorClient.getConsumedSnapshot();
@@ -116,6 +128,9 @@ public class FoodBookScreen extends Screen {
             }
         }
 }
+    /**
+     * 处理食物簿导航按钮点击。
+     */
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int guiLeft = (this.width - MAIN_PANEL_WIDTH) / 2;
@@ -136,10 +151,16 @@ public class FoodBookScreen extends Screen {
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    /**
+     * 判断鼠标是否位于指定食物格子内。
+     */
     private boolean isMouseOver(int slotX, int slotY, int mouseX, int mouseY) {
         return mouseX >= slotX && mouseY >= slotY && mouseX < slotX + 18 && mouseY < slotY + 18;
     }
 
+    /**
+     * 按滚轮方向调整有界列表偏移。
+     */
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
         int totalItem = SpiceOfLifeFabricFlavorClient.getConsumedCount();

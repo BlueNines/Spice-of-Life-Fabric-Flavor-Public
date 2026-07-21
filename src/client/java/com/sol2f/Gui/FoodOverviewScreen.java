@@ -12,6 +12,9 @@ import net.minecraft.util.Identifier;
 
 public class FoodOverviewScreen extends Screen {
 
+    /**
+     * 创建食物和生命增益概览页面。
+     */
     public FoodOverviewScreen() {
         super(Text.translatable("sol2f.gui.food_overview.title"));
     }
@@ -21,11 +24,17 @@ public class FoodOverviewScreen extends Screen {
     private static final int MAIN_PANEL_WIDTH = 248;
     private final Identifier GUI_TEXTURE = new Identifier("sol2f", "textures/gui/food_book.png");
 
+    /**
+     * 概览页面不暂停世界。
+     */
     @Override
     public boolean shouldPause() {
         return false;
     }
 
+    /**
+     * 绘制食物数量、生命增益和导航按钮。
+     */
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context);
@@ -97,6 +106,9 @@ public class FoodOverviewScreen extends Screen {
         );
     }
 
+    /**
+     * 处理概览页面导航按钮点击。
+     */
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int guiLeft = (this.width - MAIN_PANEL_WIDTH) / 2;

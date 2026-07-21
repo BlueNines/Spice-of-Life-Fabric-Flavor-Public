@@ -10,6 +10,9 @@ import com.sol2f.config.Sol2FConfig;
 import com.sol2f.SpiceOfLifeFabricFlavor;
 
 public class HungerModule {
+    /**
+     * 根据配置表达式处理一次玩家自然饥饿衰减。
+     */
     public static void PlayerNaturalHungerHandler(ServerPlayerEntity player) {
         Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
 
@@ -36,6 +39,9 @@ public class HungerModule {
         }
     }
 
+    /**
+     * 根据睡眠时长和配置表达式处理睡眠饥饿衰减。
+     */
     public static void PlayerSleepHungerHandler(ServerPlayerEntity player, int SleepDuration) {
         Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
         if (config.hunger.EnableSleepHunger) {
@@ -64,6 +70,9 @@ public class HungerModule {
         }
     }
 
+    /**
+     * 收集高级饥饿表达式使用的玩家状态变量。
+     */
     public static Map<String, Double> GetAdvancedPlayerStateVariables(ServerPlayerEntity player) {
         Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
 
@@ -115,6 +124,9 @@ public class HungerModule {
         return vars;
     }
 
+    /**
+     * 收集基础饥饿表达式使用的玩家状态变量。
+     */
     public static Map<String, Double> GetPlayerStateVariables(ServerPlayerEntity player) {
         Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
 

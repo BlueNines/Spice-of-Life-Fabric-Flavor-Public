@@ -8,6 +8,9 @@ import org.lwjgl.glfw.GLFW;
 public class KeyBindings {
     public static KeyBinding OPEN_FOOD_BOOK;
 
+    /**
+     * 注册打开食物簿的默认 H 快捷键。
+     */
     public static void register() {
         OPEN_FOOD_BOOK = KeyBindingHelper.registerKeyBinding(
             new KeyBinding(

@@ -16,6 +16,9 @@ public abstract class PlayerEntityMixin implements IEntityDataSaver {
     private transient int HungerTickCounter = 0;// 用于给Hunger功能的tick计数
     private int SleepStartTick = 0;
 
+    /**
+     * 返回玩家专属持久化数据容器。
+     */
     @Override
     public NbtCompound getPersistentData() {
         if (this.persistentData == null) {
@@ -24,22 +27,37 @@ public abstract class PlayerEntityMixin implements IEntityDataSaver {
         return persistentData;
     }
 
+    /**
+     * 返回自然饥饿累计 tick。
+     */
     public int getHungerTickCounter() {
         return HungerTickCounter;
     }
 
+    /**
+     * 清零自然饥饿累计 tick。
+     */
     public void resetHungerTickCounter() {
         HungerTickCounter = 0;
     }
 
+    /**
+     * 增加一次自然饥饿累计 tick。
+     */
     public void increaseHungerTickCounter() {
         HungerTickCounter++;
     }
 
+    /**
+     * 保存本次睡眠开始的日内 tick。
+     */
     public void setSleepStartTick(int tick) {
         SleepStartTick = tick;
     }
 
+    /**
+     * 返回本次睡眠开始的日内 tick。
+     */
     public int getSleepStartTick() {
         return SleepStartTick;
     }

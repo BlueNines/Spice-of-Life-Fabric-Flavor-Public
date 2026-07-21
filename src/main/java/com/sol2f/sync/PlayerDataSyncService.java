@@ -115,7 +115,7 @@ public final class PlayerDataSyncService {
     public static void handleDisconnect(UUID playerUuid) {
         PlayerDataSyncService service = instance;
         if (service != null) {
-            service.server.execute(() -> service.sessions.remove(playerUuid));
+            service.sessions.remove(playerUuid);
         }
     }
 
@@ -243,6 +243,12 @@ public final class PlayerDataSyncService {
         PlayerSession session = sessions.get(playerUuid);
         ServerPlayerEntity player = server.getPlayerManager().getPlayer(playerUuid);
         if (session == null || player == null || !session.sessionToken.equals(sessionToken)) {
+            return;
+        }
+        if (session.databaseLoaded && snapshot.generation() < session.generation) {
+            SpiceOfLifeFabricFlavor.LOGGER.warn(
+                    "Ignored stale MySQL snapshot for {}: snapshot generation {}, current generation {}",
+                    playerUuid, snapshot.generation(), session.generation);
             return;
         }
 
@@ -392,6 +398,7 @@ public final class PlayerDataSyncService {
         session.writeInFlight = false;
         session.dirty = false;
         session.state = SessionState.READY;
+        session.databaseLoaded = true;
         HealthModule.saveLocalEatenFoods(player, Collections.emptySet(), false);
         HealthModule.markLocalDatabaseState(player, generation, false);
         HealthModule.applyHealthModifier(player, Collections.emptySet());

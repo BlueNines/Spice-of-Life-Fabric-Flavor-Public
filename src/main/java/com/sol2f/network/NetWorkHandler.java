@@ -10,6 +10,9 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 public final class NetWorkHandler {
 
+    /**
+     * 工具类不允许实例化。
+     */
     private NetWorkHandler() {
     }
 
