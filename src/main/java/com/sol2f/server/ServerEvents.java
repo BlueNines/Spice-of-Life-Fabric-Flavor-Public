@@ -9,6 +9,7 @@ import com.sol2f.module.HungerModule;
 import com.sol2f.config.Sol2FConfig;
 import com.sol2f.network.NetWorkHandler;
 import com.sol2f.network.NetworkChannels;
+import com.sol2f.sync.PlayerDataSyncService;
 
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -25,10 +26,21 @@ public class ServerEvents {
             ServerPlayerEntity player = handler.player;// 获取玩家实例
             if (player == null) return;
 
+            if (PlayerDataSyncService.handleJoin(player)) {
+                return;
+            }
+
             // 获取并应用已消耗的食物列表
             Set<String> eaten = HealthModule.getEatenFoods(player);
             HealthModule.applyHealthModifier(player, eaten);
             NetWorkHandler.syncFoodDataToClient(player, eaten);
+        });
+
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            ServerPlayerEntity player = handler.player;
+            if (player != null) {
+                PlayerDataSyncService.handleDisconnect(player.getUuid());
+            }
         });
 
         ServerPlayNetworking.registerGlobalReceiver(NetworkChannels.C2S_REQUEST_ALL_FOOD_LIST,
@@ -56,8 +68,17 @@ public class ServerEvents {
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
             if(!alive) {
                 if (AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig().health.resetOnDeath) {
-                    // 重置已消耗的食物列表
-                    HealthModule.cleanEatenFoods(newPlayer);
+                    // 数据库模式先递增 generation，失败时保留原数据并记录告警
+                    boolean asynchronous = PlayerDataSyncService.clearPlayer(newPlayer, success -> {
+                        if (!success) {
+                            SpiceOfLifeFabricFlavor.LOGGER.warn(
+                                    "Skipped resetOnDeath for {} because MySQL clear failed",
+                                    newPlayer.getUuid());
+                        }
+                    });
+                    if (!asynchronous) {
+                        HealthModule.cleanEatenFoods(newPlayer);
+                    }
                 } else {
                     // 复制旧玩家的已消耗食物列表到新玩家
                     Set<String> eaten = HealthModule.getEatenFoods(newPlayer);

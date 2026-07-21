@@ -20,11 +20,21 @@ import net.minecraft.text.Text;
 import com.sol2f.SpiceOfLifeFabricFlavor;
 import com.sol2f.config.Sol2FConfig;
 import com.sol2f.network.NetWorkHandler;
+import com.sol2f.network.NetworkChannels;
+import com.sol2f.sync.PlayerDataSyncService;
 
 import me.shedaniel.autoconfig.AutoConfig;
 
-public class HealthModule {
+public final class HealthModule {
     private static final UUID HEALTH_MODIFIER_ID = UUID.fromString("d78153c1-68a3-48c0-88d7-74c495008c47");
+    private static final String CONSUMED_KEY = "consumed_foods";
+    private static final String DATA_VERSION = "data_version";
+    private static final String DATABASE_GENERATION_KEY = "database_generation";
+    private static final String DATABASE_DIRTY_KEY = "database_dirty";
+    private static final int CURRENT_VERSION = 2;
+
+    private HealthModule() {
+    }
 
     public static void onFoodEaten(ServerPlayerEntity serverPlayer, ItemStack stack) {
         Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
@@ -65,16 +75,18 @@ public class HealthModule {
             }
             if (!current.contains(id)) { // 食物未发现
                 current.add(id);
-                saveEatenFoods(serverPlayer, current);
+                saveLocalEatenFoods(serverPlayer, current, true);
+                PlayerDataSyncService.recordFood(serverPlayer, id, current);
 
-                // 重新读取权威持久化集合以确保写入成功
-                Set<String> authoritative = getEatenFoods(serverPlayer);
+                // 当前服务端线程中的集合是在线会话权威状态
+                Set<String> authoritative = new HashSet<>(current);
                 if (!authoritative.contains(id)) {
                     SpiceOfLifeFabricFlavor.LOGGER.warn("sol2f.HealthUseHandler | after save, authoritative eaten set does not contain {} for player {}", id, serverPlayer.getName().getString());
                 } else {
                     // 使用权威更新集应用生命值修饰符
                     double prevMax = serverPlayer.getMaxHealth();
                     applyHealthModifier(serverPlayer, authoritative);
+                    healAfterFoodDiscovery(serverPlayer);
                     double newMax = serverPlayer.getMaxHealth();
                     NetWorkHandler.syncConsumedFoodToClient(serverPlayer, authoritative);
 
@@ -93,10 +105,16 @@ public class HealthModule {
         }
     }
 
+    /**
+     * 按玩家当前进度重新应用生命值属性，不触发治疗。
+     */
     public static void applyHealthModifier(ServerPlayerEntity player) {
         applyHealthModifier(player, getEatenFoods(player));
     }
 
+    /**
+     * 按给定食物集合重新应用生命值属性，不触发治疗。
+     */
     public static void applyHealthModifier(ServerPlayerEntity player, Set<String> eatenFoods) {
         Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
     
@@ -117,7 +135,9 @@ public class HealthModule {
 
             // 计算生命值增益
             // 这里计算默认增益
-            int unique = eatenFoods.size();// 将healthyGain解释为每个独特食物（新食用）项目增加的生命值（以生命值单位）
+            Set<String> effectiveFoods = new HashSet<>(eatenFoods);
+            effectiveFoods.retainAll(getAllFoods());
+            int unique = effectiveFoods.size();// 只统计本服存在且配置允许的食物
             double perHp = config.health.healthGain;
             double BaseBonus = unique * perHp; // 来自独特食物的总生命值奖励
 
@@ -141,22 +161,26 @@ public class HealthModule {
             }
             NetWorkHandler.syncHealthBonusToClient(player, (int) PureBonus);// 发送纯增益值给客户端（仅用于GUI显示）
 
-            // 恢复生命逻辑
-            if (config.health.healthToMaxOnIncrease) { // 恢复最大生命
-                player.setHealth(player.getMaxHealth());
-                SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HealthUseHandler.applyHealthModifier | Player {} healed to max health: {}", player.getName().getString(), player.getMaxHealth());
-            } else if (config.health.healthIncreaseOnIncrease > 0) { // 恢复指定生命
-                float currentHealth = player.getHealth();
-                float increase = config.health.healthIncreaseOnIncrease;
-                float newHealth = Math.min(currentHealth + increase, (float) player.getMaxHealth());
-                player.setHealth(newHealth);
-                if (config.dev.DeveloperMode){
-                    SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HealthUseHandler.applyHealthModifier | Player {} healed to {}", player.getName().getString(), newHealth);
-                }
-            } else {}
         } catch (Exception e) {
             SpiceOfLifeFabricFlavor.LOGGER.error("sol2f.HealthUseHandler.applyHealthModifier | Failed to apply health modifier for player {}", player.getName().getString(), e);
         }
+    }
+
+    /**
+     * 只在确认首次发现食物后执行配置中的治疗效果。
+     */
+    private static void healAfterFoodDiscovery(ServerPlayerEntity player) {
+        Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
+        if (config.health.healthToMaxOnIncrease) {
+            player.setHealth(player.getMaxHealth());
+            return;
+        }
+        if (config.health.healthIncreaseOnIncrease <= 0) {
+            return;
+        }
+
+        float newHealth = Math.min(player.getHealth() + config.health.healthIncreaseOnIncrease, player.getMaxHealth());
+        player.setHealth(newHealth);
     }
 
     public static Set<String> getAllFoods() {
@@ -222,10 +246,9 @@ public class HealthModule {
     // 数据部分
     public static void cleanEatenFoods(ServerPlayerEntity player) {
         Set<String> empty = new HashSet<>();
-        saveEatenFoods(player, empty);
-        Set<String> eaten = getEatenFoods(player);
-        applyHealthModifier(player, eaten);
-        NetWorkHandler.syncConsumedFoodToClient(player, eaten);
+        saveLocalEatenFoods(player, empty, true);
+        applyHealthModifier(player, empty);
+        NetWorkHandler.syncConsumedFoodToClient(player, empty);
     }
 
     public static void addEatenFood(ServerPlayerEntity player, ItemStack food) {
@@ -233,17 +256,28 @@ public class HealthModule {
         String foodId = Registries.ITEM.getId(food.getItem()).toString();
 
         if (eatenFoods.add(foodId)) {
-            saveEatenFoods(player, eatenFoods);
+            saveLocalEatenFoods(player, eatenFoods, true);
+            PlayerDataSyncService.recordFood(player, foodId, eatenFoods);
             applyHealthModifier(player, eatenFoods);
             NetWorkHandler.syncConsumedFoodToClient(player, eatenFoods);
         }
     }
 
-    private static final String CONSUMED_KEY = "consumed_foods";
-    private static final String DATA_VERSION = "data_version";
-    private static final int CURRENT_VERSION = 1;
-
+    /**
+     * 读取在线会话食物快照；未启用数据库时回退到本地 NBT。
+     */
     public static Set<String> getEatenFoods(ServerPlayerEntity player) {
+        Set<String> synced = PlayerDataSyncService.getFoodsSnapshot(player.getUuid());
+        if (synced != null) {
+            return synced;
+        }
+        return readLocalEatenFoods(player);
+    }
+
+    /**
+     * 直接读取玩家本地 NBT，不访问在线同步会话。
+     */
+    public static Set<String> readLocalEatenFoods(ServerPlayerEntity player) {
         try {
             NbtCompound persistent = Util.readPersistentCompound(player);
             NbtList consumed = persistent.contains(CONSUMED_KEY, 9) ? persistent.getList(CONSUMED_KEY, 8)
@@ -258,32 +292,52 @@ public class HealthModule {
         }
     }
 
-    public static void saveEatenFoods(ServerPlayerEntity player, Set<String> eatenFoods) {
+    /**
+     * 将食物集合保存到本地玩家 NBT，并记录是否等待数据库确认。
+     */
+    public static void saveLocalEatenFoods(ServerPlayerEntity player, Set<String> eatenFoods, boolean dirty) {
         try {
             NbtCompound persistent = Util.readPersistentCompound(player);
-            SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HealthModule.saveEatenFoods | before save for player {} persistent contains: {}",
-                    player.getName().getString(),
-                    persistent.contains(CONSUMED_KEY, 9) ? persistent.getList(CONSUMED_KEY, 8) : "<none>");
             NbtList newList = new NbtList();
+            int written = 0;
             for (String food : eatenFoods) {
+                if (written >= NetworkChannels.MAX_FOOD_ENTRIES) {
+                    break;
+                }
                 newList.add(NbtString.of(food));
+                written++;
             }
             persistent.put(CONSUMED_KEY, newList);
             persistent.putInt(DATA_VERSION, CURRENT_VERSION);
+            persistent.putBoolean(DATABASE_DIRTY_KEY, dirty);
             Util.writePersistentCompound(player, persistent);
-            // 读回并记录权威持久化内容
-            try {
-                NbtCompound after = Util.readPersistentCompound(player);
-                SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HealthModule.saveEatenFoods | after save for player {} persistent contains: {}",
-                        player.getName().getString(),
-                        after.contains(CONSUMED_KEY, 9) ? after.getList(CONSUMED_KEY, 8) : "<none>");
-            } catch (Throwable t) {
-                SpiceOfLifeFabricFlavor.LOGGER.warn(
-                        "sol2f.HealthModule.saveEatenFoods | failed to read back persistent compound after save for player {}",
-                        player.getName().getString());
-            }
         } catch (Exception e) {
-            SpiceOfLifeFabricFlavor.LOGGER.error("sol2f.HealthModule.saveEatenFoods | failed to save eaten foods", e);
+            SpiceOfLifeFabricFlavor.LOGGER.error("sol2f.HealthModule.saveLocalEatenFoods | failed to save eaten foods", e);
         }
+    }
+
+    /**
+     * 获取本地 NBT 最近确认的数据库 generation，旧数据返回 -1。
+     */
+    public static long getLocalDatabaseGeneration(ServerPlayerEntity player) {
+        NbtCompound persistent = Util.readPersistentCompound(player);
+        return persistent.contains(DATABASE_GENERATION_KEY, 4) ? persistent.getLong(DATABASE_GENERATION_KEY) : -1L;
+    }
+
+    /**
+     * 判断本地 NBT 是否存在尚未确认写入数据库的数据。
+     */
+    public static boolean isLocalDatabaseDirty(ServerPlayerEntity player) {
+        return Util.readPersistentCompound(player).getBoolean(DATABASE_DIRTY_KEY);
+    }
+
+    /**
+     * 写入本地 NBT 对应的数据库 generation 和确认状态。
+     */
+    public static void markLocalDatabaseState(ServerPlayerEntity player, long generation, boolean dirty) {
+        NbtCompound persistent = Util.readPersistentCompound(player);
+        persistent.putLong(DATABASE_GENERATION_KEY, generation);
+        persistent.putBoolean(DATABASE_DIRTY_KEY, dirty);
+        Util.writePersistentCompound(player, persistent);
     }
 }

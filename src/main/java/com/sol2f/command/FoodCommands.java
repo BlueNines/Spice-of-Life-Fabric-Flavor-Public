@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.sol2f.SpiceOfLifeFabricFlavor;
 import com.sol2f.module.HealthModule;
 import com.sol2f.network.NetWorkHandler;
+import com.sol2f.sync.PlayerDataSyncService;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.command.CommandSource;
@@ -24,6 +25,15 @@ public class FoodCommands {
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(literal("sol2f")
+                .then(literal("status").executes(ctx -> {
+                    ServerCommandSource source = ctx.getSource();
+                    if (!source.hasPermissionLevel(2)) {
+                        source.sendError(Text.translatable("sol2f.commands.clearhealthy.permission"));
+                        return 0;
+                    }
+                    source.sendFeedback(() -> Text.literal("sol2f mysql: " + PlayerDataSyncService.describeStatus()), false);
+                    return 1;
+                }))
                 .then(literal("clearhealthy").executes(ctx -> {
                     ServerCommandSource src = ctx.getSource();
                     if (!src.hasPermissionLevel(2)) {
@@ -38,8 +48,19 @@ public class FoodCommands {
                     }
 
                     try {// 清除玩家已食用食物记录
-                        HealthModule.cleanEatenFoods(player);
-                        src.sendFeedback(() -> Text.translatable("sol2f.commands.clearhealthy.success"), false);
+                        boolean asynchronous = PlayerDataSyncService.clearPlayer(player, success -> {
+                            if (success) {
+                                src.sendFeedback(() -> Text.translatable("sol2f.commands.clearhealthy.success"), false);
+                            } else {
+                                src.sendError(Text.translatable("sol2f.commands.clearhealthy.failed"));
+                            }
+                        });
+                        if (asynchronous) {
+                            src.sendFeedback(() -> Text.translatable("sol2f.commands.clearhealthy.processing"), false);
+                        } else {
+                            HealthModule.cleanEatenFoods(player);
+                            src.sendFeedback(() -> Text.translatable("sol2f.commands.clearhealthy.success"), false);
+                        }
                     } catch (Exception e) {
                         SpiceOfLifeFabricFlavor.LOGGER.error("sol2f: failed to clear healthy", e);
                         src.sendError(Text.translatable("sol2f.commands.clearhealthy.failed"));

@@ -6,6 +6,7 @@
   "sol2f.msg.first_eaten": "You discovered: %s",
   "sol2f.msg.applyerror": "Error applying health modifier, please check if the function variables names are correct and if all values are within the allowed range",
   "sol2f.commands.clearhealthy.success": "Cleared all consumed food records for this player",
+  "sol2f.commands.clearhealthy.processing": "Clearing synchronized food records asynchronously, please wait",
   "sol2f.commands.clearhealthy.permission": "You do not have permission to run this command",
   "sol2f.commands.clearhealthy.must_be_player": "This command must be executed by a player",
   "sol2f.commands.clearhealthy.failed": "Failed to reset food consumption data",

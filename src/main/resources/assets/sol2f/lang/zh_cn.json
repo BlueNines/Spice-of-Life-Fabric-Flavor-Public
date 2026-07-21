@@ -5,6 +5,7 @@
   "sol2f.msg.first_eaten": "你发现了：%s",
   "sol2f.msg.applyerror": "应用血量修改时出错，请检查函数变量是否正确，请检查所有数值是否处于允许范围内",
   "sol2f.commands.clearhealthy.success": "已清除该玩家所有已食用食物记录",
+  "sol2f.commands.clearhealthy.processing": "正在异步清除跨服食物记录，请稍候",
   "sol2f.commands.clearhealthy.permission": "你没有权限运行此命令",
   "sol2f.commands.clearhealthy.must_be_player": "必须由玩家执行此命令",
   "sol2f.commands.clearhealthy.failed": "重置食物食用数据失败",

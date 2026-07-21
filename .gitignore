@@ -32,6 +32,8 @@ bin/
 # fabric
 
 run/
+logs/
+test-runtime/
 
 # java
 

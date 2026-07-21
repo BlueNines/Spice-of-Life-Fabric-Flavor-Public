@@ -21,6 +21,9 @@
 		"client": [
 			"com.sol2f.SpiceOfLifeFabricFlavorClient"
 		],
+		"server": [
+			"com.sol2f.SpiceOfLifeFabricFlavorServer"
+		],
 		"modmenu": ["com.sol2f.gui.ModMenuLink"]
 	},
 	"mixins": [

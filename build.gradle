@@ -55,6 +55,21 @@ dependencies {
 	implementation "net.objecthunter:exp4j:0.4.8"
 	include "net.objecthunter:exp4j:0.4.8"
 
+	// Dedicated-server MySQL synchronization
+	implementation "com.zaxxer:HikariCP:5.1.0"
+	include "com.zaxxer:HikariCP:5.1.0"
+	implementation "com.mysql:mysql-connector-j:8.4.0"
+	include "com.mysql:mysql-connector-j:8.4.0"
+	implementation "com.google.protobuf:protobuf-java:3.25.1"
+	include "com.google.protobuf:protobuf-java:3.25.1"
+
+	testImplementation platform("org.junit:junit-bom:5.10.2")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+
+}
+
+test {
+	useJUnitPlatform()
 }
 
 
