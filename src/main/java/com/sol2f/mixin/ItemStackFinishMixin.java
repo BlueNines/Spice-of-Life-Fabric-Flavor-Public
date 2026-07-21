@@ -5,8 +5,6 @@ import com.sol2f.config.Sol2FConfig;
 import com.sol2f.module.HealthModule;
 
 import me.shedaniel.autoconfig.AutoConfig;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.FoodComponent;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -28,9 +26,8 @@ public abstract class ItemStackFinishMixin {
             // 获取当前ItemStack实例（Mixin目标为实例方法，this即ItemStack）
             ItemStack stack = (ItemStack)(Object)this;
             
-            // 使用组件系统检查食物
-            FoodComponent foodComponent = stack.get(DataComponentTypes.FOOD);
-            if (foodComponent == null) return;
+            // 1.20.1 使用 Item 上的食物属性判断
+            if (stack.getItem().getFoodComponent() == null) return;
 
             // 玩家类型检查
             if (!(consumer instanceof ServerPlayerEntity)) return;

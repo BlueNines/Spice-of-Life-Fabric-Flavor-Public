@@ -19,7 +19,7 @@ public class FoodOverviewScreen extends Screen {
     private static final int GUI_WIDTH = 276;
     private static final int GUI_HEIGHT = 166;
     private static final int MAIN_PANEL_WIDTH = 248;
-    private final Identifier GUI_TEXTURE = Identifier.of("sol2f", "textures/gui/food_book.png");
+    private final Identifier GUI_TEXTURE = new Identifier("sol2f", "textures/gui/food_book.png");
 
     @Override
     public boolean shouldPause() {
@@ -28,7 +28,7 @@ public class FoodOverviewScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
+        this.renderBackground(context);
 
         int guiLeft = (this.width - MAIN_PANEL_WIDTH) / 2;
         int guiTop = (this.height - GUI_HEIGHT) / 2;

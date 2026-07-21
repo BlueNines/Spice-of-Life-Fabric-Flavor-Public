@@ -1,6 +1,5 @@
 package com.sol2f.server;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 import com.sol2f.SpiceOfLifeFabricFlavor;
@@ -9,7 +8,7 @@ import com.sol2f.module.HealthModule;
 import com.sol2f.module.HungerModule;
 import com.sol2f.config.Sol2FConfig;
 import com.sol2f.network.NetWorkHandler;
-import com.sol2f.network.payload.*;
+import com.sol2f.network.NetworkChannels;
 
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -29,13 +28,15 @@ public class ServerEvents {
             // 获取并应用已消耗的食物列表
             Set<String> eaten = HealthModule.getEatenFoods(player);
             HealthModule.applyHealthModifier(player, eaten);
-            NetWorkHandler.SyncConsumedFoodToClient(player, eaten);
-            NetWorkHandler.SyncFoodDataToClient(player, HealthModule.calculateTheoreticalMaxHealthBonus());// 同步食物for部分客户端GUI显示
+            NetWorkHandler.syncFoodDataToClient(player, eaten);
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(C2SRequestAllFoodListPayload.PACKET_ID, (payload, context) -> {
-            ServerPlayerEntity player = context.player();
-            ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(HealthModule.getAllFoods())));
+        ServerPlayNetworking.registerGlobalReceiver(NetworkChannels.C2S_REQUEST_ALL_FOOD_LIST,
+                (server, player, handler, buffer, responseSender) -> {
+            if (buffer.readableBytes() != 0) {
+                return;
+            }
+            server.execute(() -> NetWorkHandler.syncAllFoodListToClient(player, HealthModule.getAllFoods()));
         });
 
         // 复制逻辑
@@ -61,7 +62,7 @@ public class ServerEvents {
                     // 复制旧玩家的已消耗食物列表到新玩家
                     Set<String> eaten = HealthModule.getEatenFoods(newPlayer);
                     HealthModule.applyHealthModifier(newPlayer, eaten);
-                    NetWorkHandler.SyncConsumedFoodToClient(newPlayer, eaten);
+                    NetWorkHandler.syncConsumedFoodToClient(newPlayer, eaten);
                     
                 }
                 ((IEntityDataSaver) (Object) newPlayer).resetHungerTickCounter();// 重置饥HungerTick计数器
@@ -69,14 +70,19 @@ public class ServerEvents {
         });
 
         // 响应客户端请求食物列表
-        ServerPlayNetworking.registerGlobalReceiver(C2SRequestFoodListPayload.PACKET_ID, (payload, context) -> {
-            try {
-                ServerPlayerEntity player = context.player();
-                Set<String> eaten = HealthModule.getEatenFoods(player);
-                NetWorkHandler.SyncConsumedFoodToClient(player, eaten);
-            } catch (Exception e) {
-                SpiceOfLifeFabricFlavor.LOGGER.error("sol2f.ServerEvents.respondToClientListRequest | error responding to client list request", e);
+        ServerPlayNetworking.registerGlobalReceiver(NetworkChannels.C2S_REQUEST_FOOD_LIST,
+                (server, player, handler, buffer, responseSender) -> {
+            if (buffer.readableBytes() != 0) {
+                return;
             }
+            server.execute(() -> {
+                try {
+                    Set<String> eaten = HealthModule.getEatenFoods(player);
+                    NetWorkHandler.syncConsumedFoodToClient(player, eaten);
+                } catch (Exception e) {
+                    SpiceOfLifeFabricFlavor.LOGGER.error("sol2f.ServerEvents.respondToClientListRequest | error responding to client list request", e);
+                }
+            });
         });
 
         ServerTickEvents.END_SERVER_TICK.register((server) -> {

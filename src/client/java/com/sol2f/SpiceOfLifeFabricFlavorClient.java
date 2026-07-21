@@ -2,7 +2,7 @@ package com.sol2f;
 
 import com.sol2f.gui.FoodBookScreen;
 import com.sol2f.key.KeyBindings;
-import com.sol2f.network.payload.*;
+import com.sol2f.network.NetworkChannels;
 import com.sol2f.config.SOL2FClientConfig;
 
 import me.shedaniel.autoconfig.AutoConfig;
@@ -12,6 +12,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
@@ -30,7 +31,6 @@ public class SpiceOfLifeFabricFlavorClient implements ClientModInitializer {
     private static int CurrentHealth = 0;
     private static int MaxHealth = 240;
     private static volatile boolean allFoodsReceived = false;
-    private static volatile boolean whitelistEnabled = false;
 
     @Override
     public void onInitializeClient() {
@@ -39,40 +39,44 @@ public class SpiceOfLifeFabricFlavorClient implements ClientModInitializer {
         AutoConfig.register(SOL2FClientConfig.class, GsonConfigSerializer::new);
 
         // 注册网络包接收器
-        ClientPlayNetworking.registerGlobalReceiver(S2CEatenFoodListPayload.PACKET_ID, (payload, context) -> {// 接收已食用食物列表
-            List<String> list = payload.foods();
-            synchronized (consumed) {
-                consumed.clear();
-                consumed.addAll(list);
+        ClientPlayNetworking.registerGlobalReceiver(NetworkChannels.S2C_EATEN_FOOD_LIST,
+                (client, handler, buffer, responseSender) -> {
+            List<String> list = NetworkChannels.readFoodList(buffer);
+            client.execute(() -> replaceSet(consumed, list));
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(NetworkChannels.S2C_ALL_FOOD_LIST,
+                (client, handler, buffer, responseSender) -> {
+            List<String> list = NetworkChannels.readFoodList(buffer);
+            client.execute(() -> {
+                replaceSet(allFoods, list);
+                allFoodsReceived = true;
+            });
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(NetworkChannels.S2C_HEALTH,
+                (client, handler, buffer, responseSender) -> {
+            int health = buffer.readVarInt();
+            client.execute(() -> CurrentHealth = health);
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(NetworkChannels.S2C_HEALTH_MAX,
+                (client, handler, buffer, responseSender) -> {
+            int maxHealth = buffer.readVarInt();
+            client.execute(() -> MaxHealth = maxHealth);
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(NetworkChannels.S2C_OPEN_FOOD_BOOK,
+                (client, handler, buffer, responseSender) -> {
+            if (buffer.readableBytes() != 0) {
+                return;
             }
-        });
-
-        ClientPlayNetworking.registerGlobalReceiver(S2CAllFoodListPayload.PACKET_ID, (payload, context) -> {
-            List<String> list = payload.allFoods();
-            synchronized (allFoods) {
-                allFoods.clear();
-                allFoods.addAll(list);
-            }
-            allFoodsReceived = true;
-        });
-
-        ClientPlayNetworking.registerGlobalReceiver(S2CHealthPayload.PACKET_ID, (payload, context) -> {
-            CurrentHealth = payload.health();
-        });
-
-        ClientPlayNetworking.registerGlobalReceiver(S2CHealthMaxPayload.PACKET_ID, (payload, context) -> {
-            MaxHealth = payload.maxHealth();
-        });
-
-        ClientPlayNetworking.registerGlobalReceiver(OpenFoodBookPayload.PACKET_ID, (payload, context) -> {
-            MinecraftClient.getInstance().execute(() ->
-                MinecraftClient.getInstance().setScreen(new FoodBookScreen())
-            );
+            client.execute(() -> client.setScreen(new FoodBookScreen()));
         });
 
         // Tooltip
-        ItemTooltipCallback.EVENT.register((stack, tooltipContext, tooltipType, lines) -> {
-            if (!stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) return;
+        ItemTooltipCallback.EVENT.register((stack, tooltipContext, lines) -> {
+            if (stack.getItem().getFoodComponent() == null) return;
             String id = Registries.ITEM.getId(stack.getItem()).toString();
             // 基于服务端的allFoods列表进行判断，如果不在allFoods列表中且未发现则不显示tooltip
             synchronized (allFoods) {
@@ -101,10 +105,26 @@ public class SpiceOfLifeFabricFlavorClient implements ClientModInitializer {
 
         // 连接时请求全部食物列表
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-            if (!allFoodsReceived) {
-                ClientPlayNetworking.send(new C2SRequestAllFoodListPayload());
-            }
+            allFoodsReceived = false;
+            ClientPlayNetworking.send(NetworkChannels.C2S_REQUEST_ALL_FOOD_LIST, PacketByteBufs.empty());
+            ClientPlayNetworking.send(NetworkChannels.C2S_REQUEST_FOOD_LIST, PacketByteBufs.empty());
         });
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            replaceSet(consumed, Collections.emptyList());
+            replaceSet(allFoods, Collections.emptyList());
+            allFoodsReceived = false;
+        });
+    }
+
+    /**
+     * 在同步块中替换客户端集合内容。
+     */
+    private static void replaceSet(Set<String> target, List<String> values) {
+        synchronized (target) {
+            target.clear();
+            target.addAll(values);
+        }
     }
 
     // 公共访问方法（不变）

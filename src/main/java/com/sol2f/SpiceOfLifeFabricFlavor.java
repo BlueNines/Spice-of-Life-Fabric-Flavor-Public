@@ -2,8 +2,6 @@ package com.sol2f;
 
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
@@ -18,9 +16,9 @@ import java.nio.file.Path;
 
 import com.sol2f.config.Sol2FConfig;
 import com.sol2f.item.SOL2FRightClickItem;
+import com.sol2f.network.NetWorkHandler;
 import com.sol2f.server.ServerEvents;
 import com.sol2f.command.FoodCommands;
-import com.sol2f.network.payload.*;
 
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
@@ -34,7 +32,7 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
 	public static final Item FOOD_BOOK_ITEM = new SOL2FRightClickItem(// 创建食物书物品
         new Item.Settings().maxCount(1),
         (player, stack) -> {
-            ServerPlayNetworking.send(player, new OpenFoodBookPayload()); // 发送打开食物书界面的数据包给客户端
+            NetWorkHandler.openFoodBook(player); // 发送打开食物书界面的数据包给客户端
         }
     );
 
@@ -77,17 +75,10 @@ public class SpiceOfLifeFabricFlavor implements ModInitializer {
             }
         }
 
-		// 注册payload,事件,命令,物品
-		PayloadTypeRegistry.playS2C().register(S2CEatenFoodListPayload.PACKET_ID, S2CEatenFoodListPayload.CODEC);
-		PayloadTypeRegistry.playS2C().register(S2CAllFoodListPayload.PACKET_ID, S2CAllFoodListPayload.CODEC);
-		PayloadTypeRegistry.playS2C().register(S2CHealthPayload.PACKET_ID, S2CHealthPayload.CODEC);
-		PayloadTypeRegistry.playS2C().register(S2CHealthMaxPayload.PACKET_ID, S2CHealthMaxPayload.CODEC);
-		PayloadTypeRegistry.playS2C().register(OpenFoodBookPayload.PACKET_ID, OpenFoodBookPayload.CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SRequestAllFoodListPayload.PACKET_ID, C2SRequestAllFoodListPayload.CODEC);
-		PayloadTypeRegistry.playC2S().register(C2SRequestFoodListPayload.PACKET_ID, C2SRequestFoodListPayload.CODEC);
+        // 注册事件、命令和物品
         ServerEvents.register();
         FoodCommands.register();
-        Registry.register(Registries.ITEM, Identifier.of("sol2f", "food_book"), FOOD_BOOK_ITEM);
+        Registry.register(Registries.ITEM, new Identifier("sol2f", "food_book"), FOOD_BOOK_ITEM);
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(entries -> {
             entries.add(FOOD_BOOK_ITEM);
         });

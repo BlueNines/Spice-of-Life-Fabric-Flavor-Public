@@ -3,9 +3,9 @@ package com.sol2f.module;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
@@ -16,17 +16,15 @@ import net.minecraft.nbt.NbtString;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 import com.sol2f.SpiceOfLifeFabricFlavor;
 import com.sol2f.config.Sol2FConfig;
 import com.sol2f.network.NetWorkHandler;
-import com.sol2f.network.payload.S2CHealthPayload;
 
 import me.shedaniel.autoconfig.AutoConfig;
 
 public class HealthModule {
-    private static final Identifier HEALTH_MODIFIER_ID = Identifier.of("sol2f", "health_bonus");
+    private static final UUID HEALTH_MODIFIER_ID = UUID.fromString("d78153c1-68a3-48c0-88d7-74c495008c47");
 
     public static void onFoodEaten(ServerPlayerEntity serverPlayer, ItemStack stack) {
         Sol2FConfig config = AutoConfig.getConfigHolder(Sol2FConfig.class).getConfig();
@@ -78,7 +76,7 @@ public class HealthModule {
                     double prevMax = serverPlayer.getMaxHealth();
                     applyHealthModifier(serverPlayer, authoritative);
                     double newMax = serverPlayer.getMaxHealth();
-                    NetWorkHandler.SyncConsumedFoodToClient(serverPlayer, authoritative);
+                    NetWorkHandler.syncConsumedFoodToClient(serverPlayer, authoritative);
 
                     // 基于NBT状态在消息栏发送一次消息
                     Text displayName = stack.getName();
@@ -134,13 +132,14 @@ public class HealthModule {
             double PureBonus = Math.min(HealthBonus, HealthyMaximum);
 
             // 应用生命修饰符
-            EntityAttributeModifier mod = new EntityAttributeModifier(HEALTH_MODIFIER_ID, PureBonus , EntityAttributeModifier.Operation.ADD_VALUE);
+            EntityAttributeModifier mod = new EntityAttributeModifier(HEALTH_MODIFIER_ID, "sol2f health bonus", PureBonus,
+                    EntityAttributeModifier.Operation.ADDITION);
             attr.addPersistentModifier(mod);
             if (config.dev.DeveloperMode) {// 输出日志
                 SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HealthUseHandler.applyHealthModifier | Added health modifier: {} for player {} (unique={}, perHp={}, bonus={})", mod, player.getName().getString(), unique, perHp, HealthBonus);
                 SpiceOfLifeFabricFlavor.LOGGER.info("sol2f.HealthUseHandler.applyHealthModifier | Complete. Total bonus: {}, Base bonus: {}, Unique foods: {}", HealthBonus, BaseBonus, unique);
             }
-            ServerPlayNetworking.send(player, new S2CHealthPayload((int) PureBonus));// 发送纯增益值给客户端（仅用于GUI显示）
+            NetWorkHandler.syncHealthBonusToClient(player, (int) PureBonus);// 发送纯增益值给客户端（仅用于GUI显示）
 
             // 恢复生命逻辑
             if (config.health.healthToMaxOnIncrease) { // 恢复最大生命
@@ -226,7 +225,7 @@ public class HealthModule {
         saveEatenFoods(player, empty);
         Set<String> eaten = getEatenFoods(player);
         applyHealthModifier(player, eaten);
-        NetWorkHandler.SyncConsumedFoodToClient(player, eaten);
+        NetWorkHandler.syncConsumedFoodToClient(player, eaten);
     }
 
     public static void addEatenFood(ServerPlayerEntity player, ItemStack food) {
@@ -236,7 +235,7 @@ public class HealthModule {
         if (eatenFoods.add(foodId)) {
             saveEatenFoods(player, eatenFoods);
             applyHealthModifier(player, eatenFoods);
-            NetWorkHandler.SyncConsumedFoodToClient(player, eatenFoods);
+            NetWorkHandler.syncConsumedFoodToClient(player, eatenFoods);
         }
     }
 

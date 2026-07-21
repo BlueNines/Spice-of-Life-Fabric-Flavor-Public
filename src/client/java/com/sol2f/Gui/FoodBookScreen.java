@@ -23,7 +23,7 @@ public class FoodBookScreen extends Screen {
     private static final int GUI_WIDTH = 276;
     private static final int GUI_HEIGHT = 166;
     private static final int MAIN_PANEL_WIDTH = 248;
-    private final Identifier GUI_TEXTURE = Identifier.of("sol2f", "textures/gui/food_book.png");
+    private final Identifier GUI_TEXTURE = new Identifier("sol2f", "textures/gui/food_book.png");
 
     private int scrollPageOffset = 0;
     private static final int ITEMS_PER_PAGE = 96;
@@ -37,7 +37,7 @@ public class FoodBookScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         // 首先渲染背景（必须是第一行！）
-        this.renderBackground(context, mouseX, mouseY, delta);
+        this.renderBackground(context);
 
         // 计算 GUI 位置
         int guiLeft = (this.width - MAIN_PANEL_WIDTH) / 2;
@@ -99,7 +99,7 @@ public class FoodBookScreen extends Screen {
                 if (itemIndex < totalItem) {
                     String itemId = consumedItems.get(itemIndex);
                     try {
-                        Identifier id = Identifier.of(itemId);
+                        Identifier id = new Identifier(itemId);
                         Optional<Item> itemOpt = Registries.ITEM.getOrEmpty(id);
                         if (itemOpt.isPresent()) {
                             ItemStack stack = new ItemStack(itemOpt.get());
@@ -141,14 +141,14 @@ public class FoodBookScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-            int totalItem = SpiceOfLifeFabricFlavorClient.getConsumedCount();
-        int maxOffset = (totalItem + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE - 1;
+    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+        int totalItem = SpiceOfLifeFabricFlavorClient.getConsumedCount();
+        int maxOffset = Math.max(0, (totalItem + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE - 1);
 
-        if (verticalAmount > 0) {
-            scrollPageOffset = Math.max(-maxOffset, scrollPageOffset + 1);
-        } else if (verticalAmount < 0) {
-            scrollPageOffset = Math.min(0, scrollPageOffset - 1);
+        if (amount > 0) {
+            scrollPageOffset = Math.min(0, scrollPageOffset + 1);
+        } else if (amount < 0) {
+            scrollPageOffset = Math.max(-maxOffset, scrollPageOffset - 1);
         }
         return true;
     }

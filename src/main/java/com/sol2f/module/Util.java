@@ -5,7 +5,6 @@ import java.util.Map;
 
 import com.sol2f.SpiceOfLifeFabricFlavor;
 
-import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -54,7 +53,7 @@ public class Util {
      * @return 如果是食物返回 true
      */
     public static boolean isFoodItem(ItemStack stack) {
-        return stack != null && stack.contains(DataComponentTypes.FOOD);
+        return stack != null && stack.getItem().getFoodComponent() != null;
     }
 
     /**
@@ -64,7 +63,7 @@ public class Util {
      * @return 如果是食物返回 true
      */
     public static boolean isFoodItem(Item item) {
-        return item != null && item.getComponents().contains(DataComponentTypes.FOOD);
+        return item != null && item.getFoodComponent() != null;
     }
 
     // 函数计算器部分

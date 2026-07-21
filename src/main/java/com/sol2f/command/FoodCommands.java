@@ -3,13 +3,9 @@ package com.sol2f.command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.sol2f.SpiceOfLifeFabricFlavor;
 import com.sol2f.module.HealthModule;
-import com.sol2f.network.payload.S2CAllFoodListPayload;
-import com.sol2f.network.payload.S2CEatenFoodListPayload;
-import com.sol2f.network.payload.S2CHealthPayload;
-import com.sol2f.network.payload.S2CHealthMaxPayload;
+import com.sol2f.network.NetWorkHandler;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.command.CommandSource;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -17,7 +13,6 @@ import net.minecraft.text.Text;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Set;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -121,11 +116,11 @@ public class FoodCommands {
                 case "allfoodlist":
                     // 获取并同步所有非黑名单食物列表
                     Set<String> allFoods = HealthModule.getAllFoods();
-                    ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(allFoods)));
+                    NetWorkHandler.syncAllFoodListToClient(player, allFoods);
                     
                     // 重新计算并发送理论最大增益值
                     int recalculatedMaxBonus = HealthModule.calculateTheoreticalMaxHealthBonus();
-                    ServerPlayNetworking.send(player, new S2CHealthMaxPayload(recalculatedMaxBonus));
+                    NetWorkHandler.syncHealthMaxToClient(player, recalculatedMaxBonus);
                     
                     source.sendFeedback(() -> Text.translatable("sol2f.commands.sync.allfoodlist.success"), false);
                     break;
@@ -134,7 +129,7 @@ public class FoodCommands {
                     // 同步玩家数据
                     Set<String> eatenFoods = HealthModule.getEatenFoods(player);
                     eatenFoods.retainAll(HealthModule.getAllFoods());
-                    ServerPlayNetworking.send(player, new S2CEatenFoodListPayload(new ArrayList<>(eatenFoods)));
+                    NetWorkHandler.syncConsumedFoodToClient(player, eatenFoods);
 
                     source.sendFeedback(() -> Text.translatable("sol2f.commands.sync.playerdata.success"), false);
                     break;
@@ -143,13 +138,15 @@ public class FoodCommands {
                 default:
                     // 同步所有数据
                     Set<String> bothAllFoods = HealthModule.getAllFoods();
-                    ServerPlayNetworking.send(player, new S2CAllFoodListPayload(new ArrayList<>(bothAllFoods)));
+                    NetWorkHandler.syncAllFoodListToClient(player, bothAllFoods);
                     Set<String> playerEaten = HealthModule.getEatenFoods(player);
                     playerEaten.retainAll(bothAllFoods);
-                    ServerPlayNetworking.send(player, new S2CEatenFoodListPayload(new ArrayList<>(playerEaten)));
-                    ServerPlayNetworking.send(player, new S2CHealthPayload((int) player.getMaxHealth()));
+                    NetWorkHandler.syncConsumedFoodToClient(player, playerEaten);
+                    int currentBonus = Math.max(0, (int) Math.round(player.getMaxHealth() - player.getAttributeBaseValue(
+                            net.minecraft.entity.attribute.EntityAttributes.GENERIC_MAX_HEALTH)));
+                    NetWorkHandler.syncHealthBonusToClient(player, currentBonus);
                     int maxBonus = HealthModule.calculateTheoreticalMaxHealthBonus();
-                    ServerPlayNetworking.send(player, new S2CHealthMaxPayload(maxBonus));
+                    NetWorkHandler.syncHealthMaxToClient(player, maxBonus);
                     
                     source.sendFeedback(() -> Text.translatable("sol2f.commands.sync.both.success"), false);
                     break;

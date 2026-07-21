@@ -1,16 +1,15 @@
 package com.sol2f.mixin;
 
-import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.sol2f.interfaces.IEntityDataSaver;
 
-@Mixin(Entity.class)
+@Mixin(PlayerEntity.class)
 public abstract class PlayerEntityMixin implements IEntityDataSaver {
     private NbtCompound persistentData;
 
@@ -45,15 +44,21 @@ public abstract class PlayerEntityMixin implements IEntityDataSaver {
         return SleepStartTick;
     }
 
-    @Inject(method = "writeNbt", at = @At("TAIL"))
-    protected void injectWriteMethod(NbtCompound nbt, CallbackInfoReturnable<NbtCompound> info) {
+    /**
+     * 将本模组玩家数据写入玩家 NBT。
+     */
+    @Inject(method = "writeCustomDataToNbt", at = @At("TAIL"))
+    protected void injectWriteMethod(NbtCompound nbt, CallbackInfo info) {
         if (persistentData != null) {
             this.persistentData.putInt("HungerTickCounter", HungerTickCounter);// 将计数器值保存到 persistentData 中
             nbt.put("sol2f", persistentData);// 将 persistentData 保存到实体的 NBT 数据中
         }
     }
 
-    @Inject(method = "readNbt", at = @At("TAIL"))
+    /**
+     * 从玩家 NBT 恢复本模组数据。
+     */
+    @Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
     protected void injectReadMethod(NbtCompound nbt, CallbackInfo info) {
         if (nbt.contains("sol2f", 10)) {
             persistentData = nbt.getCompound("sol2f");
