@@ -4,7 +4,7 @@
 
 这是一个面向 Fabric 的食物探索模组。玩家首次食用新的标准食物时会获得可配置的最大生命值增益，并可通过食物簿查看已发现食物。
 
-当前 `1.20.1` 分支版本：`3.5.0+mc1.20.1`。
+当前 `1.20.1` 分支版本：`3.5.1+mc1.20.1`。
 
 ## 版本与依赖
 
@@ -33,7 +33,7 @@
 将以下文件放入每个 Fabric 1.20.1 服务端的 `mods` 目录：
 
 ```text
-sol2f-3.5.0+mc1.20.1.jar
+sol2f-3.5.1+mc1.20.1.jar
 fabric-api-0.92.6+1.20.1.jar
 cloth-config-fabric-11.1.136.jar
 ```
@@ -57,11 +57,11 @@ config/spice-of-life-fabric-flavor.json
 | 配置项 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | `maxHealth` | int | `5000` | 本模组可提供的最大额外生命值，不限制原版基础值或其他 Mod 增益。 |
-| `healthGain` | int | `2` | 每发现一种有效食物增加的生命值。`2 health = 1 颗红心`。 |
+| `healthGain` | int | `0` | 每发现一种有效食物固定增加的生命值；默认由表达式按饥饿值计算。`2 health = 1 颗红心`。 |
 | `resetOnDeath` | boolean | `false` | 开启后，玩家死亡时异步清空当前食物进度。MySQL 模式使用 generation 防复活。 |
 | `healthToMaxOnIncrease` | boolean | `false` | 首次发现食物并增加上限后，是否恢复到当前满血。登录、重生和数据库加载不会触发。 |
 | `healthIncreaseOnIncrease` | int | `0` | 首次发现食物后恢复的生命值数量，`0` 表示不额外治疗。 |
-| `Expression` | string | `"0"` | 额外生命值表达式，可使用 `uniqueFoods`、`totalHunger` 和 `totalSaturation`。 |
+| `Expression` | string | `"totalHunger * 0.1"` | 额外生命值表达式，可使用 `uniqueFoods`、`totalHunger` 和 `totalSaturation`。 |
 | `BlackList` | string list | 腐肉、蜘蛛眼 | 不记录且不参与本服生命计算的食物 ID。 |
 | `WhiteList` | string list | 空 | 非空时只记录和计算列表中的食物 ID。 |
 
@@ -102,7 +102,7 @@ config/spice-of-life-fabric-flavor.json
 - `totalHunger`：这些食物的原始饥饿值总和，例如生牛肉为 `3`、熟牛肉为 `8`；
 - `totalSaturation`：理论饱和度总和，单个食物按 `饥饿值 × saturationModifier × 2` 计算，不受玩家当前状态和上限裁剪影响。
 
-例如每 1 点食物饥饿值增加 `0.1` 点生命上限：
+默认配置即为每 1 点食物饥饿值增加 `0.1` 点生命上限：
 
 ```json
 "healthGain": 0,
@@ -110,6 +110,8 @@ config/spice-of-life-fabric-flavor.json
 ```
 
 此时首次发现生牛肉增加 `0.3` 点生命上限，首次发现熟牛肉增加 `0.8` 点；两种都发现后合计增加 `1.1` 点。`2 health = 1 颗红心`。
+
+该默认值只影响首次生成的新配置。升级已有服务器时不会覆盖现有 `config/spice-of-life-fabric-flavor.json`，需要手动修改这两个字段。
 
 睡眠表达式可使用 `SleepDuration`。内置常量包括 `e` 和 `pi`。
 
@@ -249,7 +251,7 @@ $env:SOL2F_TEST_MYSQL_PASSWORD='replace-me'
 
 1.20.1 分支已经完成以下本地真实验收：
 
-- Java 17 clean build，真实 MySQL 测试 `20/20` 通过；
+- Java 17 clean build，真实 MySQL 测试 `21/21` 通过；
 - MySQL 5.7.26 建表、旧表自动加列、食物数值写入、并发合并和 generation；
 - 两个独立 Fabric 1.20.1 专用服务器共享 MySQL；
 - 真实 Fabric 客户端 A→B 同步；
@@ -259,7 +261,7 @@ $env:SOL2F_TEST_MYSQL_PASSWORD='replace-me'
 - 食物簿、H 快捷键、Tooltip 和 Cloth Config 页面。
 - 食物饥饿值 `5` 的测试 Mod 食物写入数据库后，`totalHunger * 0.1` 实际得到 `0.5` 生命增益；重登后 `7.1 ms` 收敛到最大生命 `20.5`，客户端概览显示 `0.5 / 15.8`。
 
-当前最终 Jar：`build/libs/sol2f-3.5.0+mc1.20.1.jar`，大小 `4,476,755 bytes`，SHA-256：`7E124FED8FB679E416C3BC7191FF69B5248D2DF789241C8A6FDD65F5B1BBF0FB`。
+当前最终 Jar：`build/libs/sol2f-3.5.1+mc1.20.1.jar`，大小 `4,476,770 bytes`，SHA-256：`29E145C363C1C45F9A45DA96B6911AAE95BA06FFF42D1D6B5F073F245E6711A7`。
 
 ## 许可证和来源
 
@@ -275,7 +277,7 @@ $env:SOL2F_TEST_MYSQL_PASSWORD='replace-me'
 
 # English
 
-The `1.20.1` branch provides Spice of Life: Fabric Flavor `3.5.0+mc1.20.1` for Minecraft 1.20.1 and Java 17.
+The `1.20.1` branch provides Spice of Life: Fabric Flavor `3.5.1+mc1.20.1` for Minecraft 1.20.1 and Java 17.
 
 ## Requirements
 

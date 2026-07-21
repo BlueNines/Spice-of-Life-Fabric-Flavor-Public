@@ -15,14 +15,14 @@ public class Sol2FConfig implements ConfigData {
     public static class HealthSetting {
         public int maxHealth = 5000;
 
-        public int healthGain = 2;
+        public int healthGain = 0;
 
         public boolean resetOnDeath = false;
 
         public boolean healthToMaxOnIncrease = false;
         public int healthIncreaseOnIncrease = 0;
 
-        public String Expression = "0";
+        public String Expression = "totalHunger * 0.1";
 
         public List<String> BlackList = Arrays.asList(
             "minecraft:rotten_flesh",

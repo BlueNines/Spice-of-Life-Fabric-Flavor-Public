@@ -6,7 +6,7 @@
 - Java：`17`
 - Fabric Loader：`0.17.3` 或更高的 1.20.1 兼容版本
 - Fabric API：`0.92.6+1.20.1`
-- 模组版本：`3.5.0+mc1.20.1`
+- 模组版本：`3.5.1+mc1.20.1`
 - Cloth Config：`11.1.136`
 - Mod Menu：`7.2.2`，仅客户端配置入口需要
 - MySQL：已使用 `5.7.26` 完成集成与双服验收
@@ -30,7 +30,7 @@
 
 每个 Fabric 子服的 `mods` 目录至少需要：
 
-- `sol2f-3.5.0+mc1.20.1.jar`
+- `sol2f-3.5.1+mc1.20.1.jar`
 - `fabric-api-0.92.6+1.20.1.jar`
 - `cloth-config-fabric-11.1.136.jar`
 
@@ -181,12 +181,14 @@ config/spice-of-life-fabric-flavor-database.json
 - `totalHunger`：当前有效食物 `hunger_points` 总和；
 - `totalSaturation`：当前有效食物理论饱和度总和。
 
-每 1 点食物饥饿值增加 `0.1` 点生命上限时，服务端功能配置应为：
+默认配置就是每 1 点食物饥饿值增加 `0.1` 点生命上限：
 
 ```json
 "healthGain": 0,
 "Expression": "totalHunger * 0.1"
 ```
+
+模组不会覆盖已经存在的功能配置文件。旧服务器升级到 `3.5.1` 后，需要在每个子服手动修改一次这两个字段，并保持跨服公式一致。
 
 ## 9. 命令与诊断
 
