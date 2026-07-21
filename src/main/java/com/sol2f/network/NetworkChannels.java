@@ -84,4 +84,16 @@ public final class NetworkChannels {
         buffer.writeVarInt(value);
         return buffer;
     }
+
+    /**
+     * 创建只包含一个双精度数值的数据包。
+     *
+     * @param value 要写入的数值
+     * @return 可发送的数据包缓冲区
+     */
+    public static PacketByteBuf writeDouble(double value) {
+        PacketByteBuf buffer = PacketByteBufs.create();
+        buffer.writeDouble(value);
+        return buffer;
+    }
 }

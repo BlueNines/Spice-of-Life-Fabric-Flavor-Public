@@ -66,18 +66,22 @@ class MySqlStorageIntegrationTest {
             assertEquals(0L, first.generation());
             assertEquals(Set.of(), first.foods());
 
-            storage.insertFoods(playerUuid, 0L, Set.of("minecraft:apple", "minecraft:bread"));
-            storage.insertFoods(playerUuid, 0L, Set.of("minecraft:apple"));
+            storage.insertFoodValues(playerUuid, 0L, Set.of(
+                    new FoodValue("minecraft:apple", 4, 0.3D),
+                    new FoodValue("minecraft:bread", 5, 0.6D)));
+            storage.insertFoodValues(playerUuid, 0L, Set.of(new FoodValue("minecraft:apple", 4, 0.3D)));
             PlayerFoodSnapshot stored = storage.loadPlayer(playerUuid, "Tester");
             assertFalse(stored.created());
             assertEquals(Set.of("minecraft:apple", "minecraft:bread"), stored.foods());
+            assertEquals(4, stored.foodValues().get("minecraft:apple").hungerPoints());
+            assertEquals(0.3D, stored.foodValues().get("minecraft:apple").saturationModifier(), 0.0001D);
 
             long generation = storage.advanceGeneration(playerUuid, "Tester");
             assertEquals(1L, generation);
-            storage.insertFoods(playerUuid, 0L, Set.of("minecraft:carrot"));
+            storage.insertFoodValues(playerUuid, 0L, Set.of(new FoodValue("minecraft:carrot", 3, 0.6D)));
             assertEquals(Set.of(), storage.loadPlayer(playerUuid, "Tester").foods());
 
-            storage.insertFoods(playerUuid, generation, Set.of("minecraft:potato"));
+            storage.insertFoodValues(playerUuid, generation, Set.of(new FoodValue("minecraft:potato", 1, 0.6D)));
             assertEquals(Set.of("minecraft:potato"), storage.loadPlayer(playerUuid, "Tester").foods());
         }
     }
@@ -97,8 +101,11 @@ class MySqlStorageIntegrationTest {
             List<Future<?>> futures = new ArrayList<>();
             for (int index = 0; index < 20; index++) {
                 String foodId = "test:food_" + index;
+                int hungerPoints = index + 1;
                 futures.add(workers.submit(() -> {
-                    storage.insertFoods(playerUuid, 0L, Set.of(foodId, "test:shared"));
+                    storage.insertFoodValues(playerUuid, 0L, Set.of(
+                            new FoodValue(foodId, hungerPoints, 0.5D),
+                            new FoodValue("test:shared", 1, 0.5D)));
                     return null;
                 }));
             }
@@ -111,6 +118,41 @@ class MySqlStorageIntegrationTest {
             assertTrue(snapshot.foods().contains("test:shared"));
         } finally {
             workers.shutdownNow();
+        }
+    }
+
+    /**
+     * 验证已有旧表会自动补充食物数值列并可继续写入。
+     */
+    @Test
+    void migratesLegacyFoodTableColumns() throws Exception {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password);
+                Statement statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    CREATE TABLE sol2f_consumed_food (
+                        sync_group VARCHAR(64) CHARACTER SET ascii NOT NULL,
+                        player_uuid CHAR(36) CHARACTER SET ascii NOT NULL,
+                        generation BIGINT UNSIGNED NOT NULL,
+                        food_id VARCHAR(191) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+                        source_server VARCHAR(64) CHARACTER SET ascii NOT NULL DEFAULT '',
+                        first_eaten_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                        PRIMARY KEY (sync_group, player_uuid, generation, food_id)
+                    ) ENGINE=InnoDB
+                    """);
+        }
+
+        UUID playerUuid = UUID.randomUUID();
+        try (MySqlStorage storage = new MySqlStorage(createSettings(2))) {
+            storage.initializeSchema();
+            storage.loadPlayer(playerUuid, "LegacyTester");
+            storage.insertFoodValues(playerUuid, 0L,
+                    Set.of(new FoodValue("minecraft:cooked_beef", 8, 0.8D)));
+
+            FoodValue stored = storage.loadPlayer(playerUuid, "LegacyTester")
+                    .foodValues()
+                    .get("minecraft:cooked_beef");
+            assertEquals(8, stored.hungerPoints());
+            assertEquals(0.8D, stored.saturationModifier(), 0.0001D);
         }
     }
 

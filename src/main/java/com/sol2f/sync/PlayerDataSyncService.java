@@ -2,7 +2,6 @@ package com.sol2f.sync;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -138,18 +137,26 @@ public final class PlayerDataSyncService {
      * 返回在线会话食物快照；没有会话时返回 null。
      */
     public static Set<String> getFoodsSnapshot(UUID playerUuid) {
+        Map<String, FoodValue> values = getFoodValuesSnapshot(playerUuid);
+        return values == null ? null : values.keySet();
+    }
+
+    /**
+     * 返回在线会话食物数值快照；没有会话时返回 null。
+     */
+    public static Map<String, FoodValue> getFoodValuesSnapshot(UUID playerUuid) {
         PlayerDataSyncService service = instance;
         if (service == null) {
             return null;
         }
         PlayerSession session = service.sessions.get(playerUuid);
-        return session == null ? null : new HashSet<>(session.foods);
+        return session == null ? null : new HashMap<>(session.foods);
     }
 
     /**
      * 记录玩家首次食用的新食物并异步刷入数据库。
      */
-    public static void recordFood(ServerPlayerEntity player, String foodId, Set<String> currentFoods) {
+    public static void recordFood(ServerPlayerEntity player, FoodValue food, Map<String, FoodValue> currentFoods) {
         PlayerDataSyncService service = instance;
         if (service == null) {
             return;
@@ -160,8 +167,8 @@ public final class PlayerDataSyncService {
         }
 
         session.foods.clear();
-        session.foods.addAll(currentFoods);
-        session.pendingFoods.add(foodId);
+        session.foods.putAll(currentFoods);
+        session.pendingFoods.put(food.foodId(), food);
         session.dirty = true;
         if (session.state == SessionState.READY) {
             service.flushPending(session);
@@ -184,7 +191,7 @@ public final class PlayerDataSyncService {
      * 创建登录会话并启动立即查询和五秒补偿查询。
      */
     private void join(ServerPlayerEntity player) {
-        Set<String> localFoods = HealthModule.readLocalEatenFoods(player);
+        Map<String, FoodValue> localFoods = HealthModule.readLocalFoodValues(player);
         long localGeneration = HealthModule.getLocalDatabaseGeneration(player);
         boolean localDirty = HealthModule.isLocalDatabaseDirty(player);
         PlayerSession session = new PlayerSession(
@@ -197,7 +204,7 @@ public final class PlayerDataSyncService {
         sessions.put(player.getUuid(), session);
 
         HealthModule.applyHealthModifier(player, localFoods);
-        NetWorkHandler.syncFoodDataToClient(player, localFoods);
+        NetWorkHandler.syncFoodDataToClient(player, localFoods.keySet());
         requestLoad(session);
 
         scheduler.schedule(
@@ -257,26 +264,38 @@ public final class PlayerDataSyncService {
                 snapshot.foods(),
                 snapshot.generation(),
                 firstSuccessfulLoad,
-                session.loginFoods,
+                session.loginFoods.keySet(),
                 session.loginGeneration,
                 session.loginDirty,
+                session.pendingFoods.keySet());
+        Map<String, FoodValue> merged = mergeFoodValues(
+                mergeResult.foods(),
+                snapshot.foodValues(),
+                session.loginFoods,
                 session.pendingFoods);
-        Set<String> merged = new HashSet<>(mergeResult.foods());
         if (session.generation != snapshot.generation()) {
             session.writeInFlight = false;
         }
-        session.pendingFoods.addAll(mergeResult.missingFromDatabase());
+        for (String foodId : mergeResult.missingFromDatabase()) {
+            session.pendingFoods.put(foodId, merged.get(foodId));
+        }
+        for (Map.Entry<String, FoodValue> entry : snapshot.foodValues().entrySet()) {
+            FoodValue mergedValue = merged.get(entry.getKey());
+            if (!entry.getValue().known() && mergedValue != null && mergedValue.known()) {
+                session.pendingFoods.put(entry.getKey(), mergedValue);
+            }
+        }
         session.foods.clear();
-        session.foods.addAll(merged);
+        session.foods.putAll(merged);
         session.generation = snapshot.generation();
         session.databaseLoaded = true;
         session.state = SessionState.READY;
         session.dirty = !session.pendingFoods.isEmpty();
 
-        HealthModule.saveLocalEatenFoods(player, merged, session.dirty);
+        HealthModule.saveLocalFoodValues(player, merged, session.dirty);
         HealthModule.markLocalDatabaseState(player, session.generation, session.dirty);
         HealthModule.applyHealthModifier(player, merged);
-        NetWorkHandler.syncFoodDataToClient(player, merged);
+        NetWorkHandler.syncFoodDataToClient(player, merged.keySet());
         flushPending(session);
     }
 
@@ -306,14 +325,14 @@ public final class PlayerDataSyncService {
             return;
         }
 
-        Set<String> batch = new HashSet<>(session.pendingFoods);
+        Map<String, FoodValue> batch = new HashMap<>(session.pendingFoods);
         UUID playerUuid = session.playerUuid;
         UUID sessionToken = session.sessionToken;
         long generation = session.generation;
         session.writeInFlight = true;
         submitDatabase(
                 () -> {
-                    currentStorage.insertFoods(playerUuid, generation, batch);
+                    currentStorage.insertFoodValues(playerUuid, generation, batch.values());
                     return Boolean.TRUE;
                 },
                 ignored -> finishWrite(playerUuid, sessionToken, generation, batch),
@@ -323,18 +342,19 @@ public final class PlayerDataSyncService {
     /**
      * 在主线程确认成功写入并继续处理后续脏数据。
      */
-    private void finishWrite(UUID playerUuid, UUID sessionToken, long generation, Set<String> writtenFoods) {
+    private void finishWrite(UUID playerUuid, UUID sessionToken, long generation,
+            Map<String, FoodValue> writtenFoods) {
         PlayerSession session = sessions.get(playerUuid);
         if (session == null || !session.sessionToken.equals(sessionToken) || session.generation != generation) {
             return;
         }
         session.writeInFlight = false;
-        session.pendingFoods.removeAll(writtenFoods);
+        session.pendingFoods.keySet().removeAll(writtenFoods.keySet());
         session.dirty = !session.pendingFoods.isEmpty();
 
         ServerPlayerEntity player = server.getPlayerManager().getPlayer(playerUuid);
         if (player != null) {
-            HealthModule.saveLocalEatenFoods(player, session.foods, session.dirty);
+            HealthModule.saveLocalFoodValues(player, session.foods, session.dirty);
             HealthModule.markLocalDatabaseState(player, generation, session.dirty);
         }
         flushPending(session);
@@ -399,7 +419,7 @@ public final class PlayerDataSyncService {
         session.dirty = false;
         session.state = SessionState.READY;
         session.databaseLoaded = true;
-        HealthModule.saveLocalEatenFoods(player, Collections.emptySet(), false);
+        HealthModule.saveLocalFoodValues(player, Collections.emptyMap(), false);
         HealthModule.markLocalDatabaseState(player, generation, false);
         HealthModule.applyHealthModifier(player, Collections.emptySet());
         NetWorkHandler.syncFoodDataToClient(player, Collections.emptySet());
@@ -517,6 +537,36 @@ public final class PlayerDataSyncService {
     }
 
     /**
+     * 为已经通过 generation 规则筛选的食物 ID 选择最可靠的数值快照。
+     */
+    private static Map<String, FoodValue> mergeFoodValues(Set<String> foodIds,
+            Map<String, FoodValue> databaseFoods,
+            Map<String, FoodValue> loginFoods,
+            Map<String, FoodValue> pendingFoods) {
+        Map<String, FoodValue> merged = new HashMap<>();
+        for (String foodId : foodIds) {
+            FoodValue value = databaseFoods.get(foodId);
+            if (value == null || !value.known()) {
+                FoodValue pending = pendingFoods.get(foodId);
+                if (pending != null && pending.known()) {
+                    value = pending;
+                }
+            }
+            if (value == null || !value.known()) {
+                FoodValue local = loginFoods.get(foodId);
+                if (local != null && local.known()) {
+                    value = local;
+                }
+            }
+            if (value == null || !value.known()) {
+                value = HealthModule.resolveFoodValue(foodId);
+            }
+            merged.put(foodId, value);
+        }
+        return merged;
+    }
+
+    /**
      * 表示数据库线程中允许抛出受检异常的任务。
      */
     @FunctionalInterface
@@ -540,11 +590,11 @@ public final class PlayerDataSyncService {
         private final UUID playerUuid;
         private final UUID sessionToken;
         private final String playerName;
-        private final Set<String> loginFoods;
+        private final Map<String, FoodValue> loginFoods;
         private final long loginGeneration;
         private final boolean loginDirty;
-        private final Set<String> foods;
-        private final Set<String> pendingFoods = new HashSet<>();
+        private final Map<String, FoodValue> foods;
+        private final Map<String, FoodValue> pendingFoods = new HashMap<>();
         private SessionState state = SessionState.LOADING;
         private long generation;
         private boolean dirty;
@@ -554,15 +604,16 @@ public final class PlayerDataSyncService {
         /**
          * 创建一次登录对应的会话快照。
          */
-        private PlayerSession(UUID playerUuid, UUID sessionToken, String playerName, Set<String> localFoods,
+        private PlayerSession(UUID playerUuid, UUID sessionToken, String playerName,
+                Map<String, FoodValue> localFoods,
                 long localGeneration, boolean localDirty) {
             this.playerUuid = playerUuid;
             this.sessionToken = sessionToken;
             this.playerName = playerName;
-            this.loginFoods = Set.copyOf(localFoods);
+            this.loginFoods = Map.copyOf(localFoods);
             this.loginGeneration = localGeneration;
             this.loginDirty = localDirty;
-            this.foods = new HashSet<>(localFoods);
+            this.foods = new HashMap<>(localFoods);
             this.generation = Math.max(0L, localGeneration);
             this.dirty = localDirty;
         }

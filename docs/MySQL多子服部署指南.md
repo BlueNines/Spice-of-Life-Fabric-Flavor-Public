@@ -6,12 +6,12 @@
 - Java：`17`
 - Fabric Loader：`0.17.3` 或更高的 1.20.1 兼容版本
 - Fabric API：`0.92.6+1.20.1`
-- 模组版本：`3.4.0+mc1.20.1`
+- 模组版本：`3.5.0+mc1.20.1`
 - Cloth Config：`11.1.136`
 - Mod Menu：`7.2.2`，仅客户端配置入口需要
 - MySQL：已使用 `5.7.26` 完成集成与双服验收
 
-本功能只同步本模组的“已食用食物 ID”。背包、位置、维度、饥饿值、睡眠状态和整个玩家 NBT 都不会写入 MySQL。
+本功能只同步本模组的“已食用食物 ID”和食物自身的数值快照。背包、位置、维度、玩家当前饥饿状态、睡眠状态和整个玩家 NBT 都不会写入 MySQL。
 
 ## 2. 一致性模型
 
@@ -30,7 +30,7 @@
 
 每个 Fabric 子服的 `mods` 目录至少需要：
 
-- `sol2f-3.4.0+mc1.20.1.jar`
+- `sol2f-3.5.0+mc1.20.1.jar`
 - `fabric-api-0.92.6+1.20.1.jar`
 - `cloth-config-fabric-11.1.136.jar`
 
@@ -48,7 +48,7 @@ CREATE DATABASE sol2f
 CREATE USER 'sol2f'@'10.%'
   IDENTIFIED BY '请替换为强密码';
 
-GRANT SELECT, INSERT, UPDATE, CREATE
+GRANT SELECT, INSERT, UPDATE, CREATE, ALTER
   ON sol2f.*
   TO 'sol2f'@'10.%';
 
@@ -58,9 +58,9 @@ FLUSH PRIVILEGES;
 模组会自动创建以下两张表：
 
 - `sol2f_player_state`：保存同步组、玩家 UUID、当前 generation 和最后玩家名；
-- `sol2f_consumed_food`：按“同步组 + UUID + generation + 食物 ID”一食物一行保存。
+- `sol2f_consumed_food`：按“同步组 + UUID + generation + 食物 ID”一食物一行保存，并记录 `hunger_points` 与 `saturation_modifier`。
 
-运行期不需要 `DROP`、`DELETE` 或数据库级管理员权限。首次建表完成后，如需进一步收紧权限，可以移除 `CREATE`，但后续版本若增加表结构迁移，需要临时恢复相应权限。
+运行期不需要 `DROP`、`DELETE` 或数据库级管理员权限。`3.5.0` 会自动为旧表增加两个数值列，因此从旧版升级时需要一次 `ALTER` 权限。迁移完成后可移除 `CREATE` 和 `ALTER`，但后续版本若再次调整表结构，需要临时恢复。
 
 ## 5. 数据库配置文件
 
@@ -144,7 +144,7 @@ config/spice-of-life-fabric-flavor-database.json
 ### 8.1 登录
 
 1. 服务端线程读取本地 NBT 作为即时回退快照；
-2. 专用数据库线程异步读取当前 generation 和食物集合；
+2. 专用数据库线程异步读取当前 generation、食物集合和已经记录的食物数值；
 3. 数据库线程只返回不可变数据，不访问玩家实体、世界或 NBT；
 4. 结果通过 `MinecraftServer.execute` 回到服务端线程；
 5. 校验 `sessionToken` 和 generation 后更新玩家属性、NBT和客户端数据；
@@ -155,7 +155,7 @@ config/spice-of-life-fabric-flavor-database.json
 1. 服务端确认物品具有标准 1.20.1 `FoodComponent`；
 2. 检查黑白名单和数量上限；
 3. 服务端线程立即更新内存、玩家属性和客户端；
-4. 仅把新增食物作为小型 `INSERT IGNORE` 异步写入；
+4. 仅把新增食物 ID、饥饿值和饱和度系数作为小型幂等写入异步提交；
 5. Tick、Tooltip、GUI和普通命令不会直接查询数据库。
 
 ### 8.3 清空与死亡重置
@@ -163,6 +163,30 @@ config/spice-of-life-fabric-flavor-database.json
 `/sol2f clearhealthy` 和 `resetOnDeath=true` 使用 generation 递增，而不是删除全部旧行。
 
 例如玩家当前 generation 为 `2`，清空后变为 `3`。即使 generation `2` 的旧异步写入稍后到达，登录查询也只读取 generation `3`，旧数据不能复活。
+
+`generation` 不是食物数量，也不参与生命值公式。它只是玩家这份食物进度的“代次编号”：清空前的行留在旧代次，新登录只读取当前代次。
+
+### 8.4 食物数值和生命公式
+
+食物的两个原始字段来自 Minecraft 1.20.1 标准 `FoodComponent`：
+
+- `hunger_points`：食物恢复的饥饿值，例如生牛肉为 `3`、熟牛肉为 `8`；
+- `saturation_modifier`：原版饱和度系数，例如生牛肉为 `0.3`、熟牛肉为 `0.8`。
+
+理论饱和度点数按 `hunger_points × saturation_modifier × 2` 计算。这里保存的是食物固有数值，不保存玩家本次实际增加了多少；实际增量会受玩家当前饥饿值、饱和度和原版上限裁剪影响，不适合作为永久成长依据。
+
+生命表达式变量：
+
+- `uniqueFoods`：当前有效食物数量；
+- `totalHunger`：当前有效食物 `hunger_points` 总和；
+- `totalSaturation`：当前有效食物理论饱和度总和。
+
+每 1 点食物饥饿值增加 `0.1` 点生命上限时，服务端功能配置应为：
+
+```json
+"healthGain": 0,
+"Expression": "totalHunger * 0.1"
+```
 
 ## 9. 命令与诊断
 

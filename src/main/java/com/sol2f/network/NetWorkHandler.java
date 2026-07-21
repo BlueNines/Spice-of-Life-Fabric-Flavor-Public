@@ -41,9 +41,9 @@ public final class NetWorkHandler {
     /**
      * 向客户端同步当前生命值增益。
      */
-    public static void syncHealthBonusToClient(ServerPlayerEntity player, int healthBonus) {
+    public static void syncHealthBonusToClient(ServerPlayerEntity player, double healthBonus) {
         try {
-            ServerPlayNetworking.send(player, NetworkChannels.S2C_HEALTH, NetworkChannels.writeInt(healthBonus));
+            ServerPlayNetworking.send(player, NetworkChannels.S2C_HEALTH, NetworkChannels.writeDouble(healthBonus));
         } catch (Exception e) {
             SpiceOfLifeFabricFlavor.LOGGER.error("Failed to sync health bonus to client", e);
         }
@@ -52,9 +52,9 @@ public final class NetWorkHandler {
     /**
      * 向客户端同步理论最大生命值增益。
      */
-    public static void syncHealthMaxToClient(ServerPlayerEntity player, int maxHealthBonus) {
+    public static void syncHealthMaxToClient(ServerPlayerEntity player, double maxHealthBonus) {
         try {
-            ServerPlayNetworking.send(player, NetworkChannels.S2C_HEALTH_MAX, NetworkChannels.writeInt(maxHealthBonus));
+            ServerPlayNetworking.send(player, NetworkChannels.S2C_HEALTH_MAX, NetworkChannels.writeDouble(maxHealthBonus));
         } catch (Exception e) {
             SpiceOfLifeFabricFlavor.LOGGER.error("Failed to sync max health bonus to client", e);
         }

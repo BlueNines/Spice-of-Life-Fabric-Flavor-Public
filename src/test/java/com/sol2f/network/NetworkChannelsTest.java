@@ -26,6 +26,17 @@ class NetworkChannelsTest {
     }
 
     /**
+     * 小数生命增益应通过双精度网络载荷完整传输。
+     */
+    @Test
+    void roundTripsFractionalHealthValue() {
+        PacketByteBuf buffer = NetworkChannels.writeDouble(0.8D);
+
+        assertEquals(0.8D, buffer.readDouble(), 0.000001D);
+        assertEquals(0, buffer.readableBytes());
+    }
+
+    /**
      * 超过数量上限的数据包必须被拒绝。
      */
     @Test

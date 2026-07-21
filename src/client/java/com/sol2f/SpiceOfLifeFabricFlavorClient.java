@@ -28,8 +28,8 @@ public class SpiceOfLifeFabricFlavorClient implements ClientModInitializer {
 
     private static final Set<String> consumed = Collections.synchronizedSet(new HashSet<>()); // 记录已食用的食物ID
     private static final Set<String> allFoods = Collections.synchronizedSet(new HashSet<>());
-    private static int CurrentHealth = 0;
-    private static int MaxHealth = 240;
+    private static double CurrentHealth = 0.0D;
+    private static double MaxHealth = 240.0D;
     private static volatile boolean allFoodsReceived = false;
 
     /**
@@ -59,13 +59,13 @@ public class SpiceOfLifeFabricFlavorClient implements ClientModInitializer {
 
         ClientPlayNetworking.registerGlobalReceiver(NetworkChannels.S2C_HEALTH,
                 (client, handler, buffer, responseSender) -> {
-            int health = buffer.readVarInt();
+            double health = buffer.readDouble();
             client.execute(() -> CurrentHealth = health);
         });
 
         ClientPlayNetworking.registerGlobalReceiver(NetworkChannels.S2C_HEALTH_MAX,
                 (client, handler, buffer, responseSender) -> {
-            int maxHealth = buffer.readVarInt();
+            double maxHealth = buffer.readDouble();
             client.execute(() -> MaxHealth = maxHealth);
         });
 
@@ -133,14 +133,14 @@ public class SpiceOfLifeFabricFlavorClient implements ClientModInitializer {
     /**
      * 返回当前服务端同步的生命增益。
      */
-    public static int getCurrentHealth() {
+    public static double getCurrentHealth() {
         return CurrentHealth;
     }
 
     /**
      * 返回当前服务端同步的理论最大生命增益。
      */
-    public static int getMaxHealth() {
+    public static double getMaxHealth() {
         return MaxHealth;
     }
 

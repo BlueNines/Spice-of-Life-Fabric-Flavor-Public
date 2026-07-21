@@ -1,5 +1,7 @@
 package com.sol2f.gui;
 
+import java.math.BigDecimal;
+
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 
@@ -93,7 +95,9 @@ public class FoodOverviewScreen extends Screen {
             false
         );
 
-        Text OverviewHealthyCount = Text.literal(SpiceOfLifeFabricFlavorClient.getCurrentHealth() + " / " + SpiceOfLifeFabricFlavorClient.getMaxHealth());// 当前增益血量 / 最大增益血量
+        Text OverviewHealthyCount = Text.literal(
+                formatHealth(SpiceOfLifeFabricFlavorClient.getCurrentHealth()) + " / "
+                        + formatHealth(SpiceOfLifeFabricFlavorClient.getMaxHealth()));// 当前增益血量 / 最大增益血量
         int HCFontWidth = textRenderer.getWidth(OverviewHealthyCount);
         int HCDrawX = guiLeft + 23 + (OverviewDrawWidth - HCFontWidth) / 2;
         context.drawText(
@@ -104,6 +108,13 @@ public class FoodOverviewScreen extends Screen {
             0x000000,
             false
         );
+    }
+
+    /**
+     * 将生命值保留必要的小数位，避免整数显示为带零的小数。
+     */
+    private static String formatHealth(double value) {
+        return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
     }
 
     /**

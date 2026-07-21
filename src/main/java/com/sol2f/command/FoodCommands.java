@@ -149,7 +149,7 @@ public class FoodCommands {
                     NetWorkHandler.syncAllFoodListToClient(player, allFoods);
                     
                     // 重新计算并发送理论最大增益值
-                    int recalculatedMaxBonus = HealthModule.calculateTheoreticalMaxHealthBonus();
+                    double recalculatedMaxBonus = HealthModule.calculateTheoreticalMaxHealthBonus();
                     NetWorkHandler.syncHealthMaxToClient(player, recalculatedMaxBonus);
                     
                     source.sendFeedback(() -> Text.translatable("sol2f.commands.sync.allfoodlist.success"), false);
@@ -172,10 +172,11 @@ public class FoodCommands {
                     Set<String> playerEaten = HealthModule.getEatenFoods(player);
                     playerEaten.retainAll(bothAllFoods);
                     NetWorkHandler.syncConsumedFoodToClient(player, playerEaten);
-                    int currentBonus = Math.max(0, (int) Math.round(player.getMaxHealth() - player.getAttributeBaseValue(
-                            net.minecraft.entity.attribute.EntityAttributes.GENERIC_MAX_HEALTH)));
+                    double currentBonus = Math.max(0.0D,
+                            player.getMaxHealth() - player.getAttributeBaseValue(
+                                    net.minecraft.entity.attribute.EntityAttributes.GENERIC_MAX_HEALTH));
                     NetWorkHandler.syncHealthBonusToClient(player, currentBonus);
-                    int maxBonus = HealthModule.calculateTheoreticalMaxHealthBonus();
+                    double maxBonus = HealthModule.calculateTheoreticalMaxHealthBonus();
                     NetWorkHandler.syncHealthMaxToClient(player, maxBonus);
                     
                     source.sendFeedback(() -> Text.translatable("sol2f.commands.sync.both.success"), false);
